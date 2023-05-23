@@ -1,10 +1,11 @@
-import VueRouter from 'vue-router';
+import { createRouter, createWebHashHistory, createWebHistory } from 'vue-router';
 
-import ChatHome from '../view/pages/chatHome/index.vue';
-import Setting from '../view/pages/setting.vue';
-import UserInfo from '../view/pages/user/userInfo.vue';
+import ChatHome from '@/view/pages/chatHome/index.vue';
+import Setting from '@/view/pages/setting.vue';
+import UserInfo from '@/view/pages/user/userInfo.vue';
 
-export default new VueRouter({
+export default createRouter({
+  history: process.env.IS_ELECTRON ? createWebHashHistory() : createWebHistory(),
   routes: [
     {
       path: '/',
