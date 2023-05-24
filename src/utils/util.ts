@@ -1,12 +1,12 @@
-import lodash from 'lodash-es';
+import { debounce, throttle } from 'lodash-es';
+import { ElMessage } from 'element-plus';
 import i18n from '@/config/i18n';
 
-//防抖
-export const debounce = lodash.debounce;
-//节流
-export const throttle = lodash.throttle;
-//下拉动画
-export function animation(obj: any, target: any, fn1: any) {
+// 防抖/节流
+export { debounce, throttle };
+
+// 下拉动画
+export const animation = (obj: any, target: any, fn1?: any) => {
   // fn是一个回调函数，在定时器结束的时候添加
   // 每次开定时器之前先清除掉定时器
   clearInterval(obj.timer);
@@ -26,10 +26,10 @@ export function animation(obj: any, target: any, fn1: any) {
       obj.scrollTop = obj.scrollTop + step;
     }
   }, 10);
-}
+};
 
-//判断文件类型
-export function judgeFileType(file: string) {
+// 判断文件类型
+export const judgeFileType = (file: string) => {
   if (file == null || file == '') {
     alert(i18n.t('util_js.select'));
     return false;
@@ -46,10 +46,10 @@ export function judgeFileType(file: string) {
     alert(ErrMsg);
     return false;
   }
-}
+};
 
-//文件类型
-export function fileType() {
+// 文件类型
+export const fileType = () => {
   return {
     'application/msword': 'word',
     'application/pdf': 'pdf',
@@ -57,10 +57,10 @@ export function fileType() {
     'application/vnd.ms-excel': 'excel',
     'aplication/zip': 'zpi'
   };
-}
+};
 
 // 获取当前时间
-export function getNowTime() {
+export const getNowTime = () => {
   // 创建一个Date对象
   let date = new Date();
   // 获取年份、月份、日期、小时、分钟和秒数
@@ -90,10 +90,10 @@ export function getNowTime() {
   let currentTime = year + '-' + month + '-' + day + ' ' + hour + ':' + minute + ':' + second;
   // 输出结果
   return currentTime;
-}
+};
 
 // 格式化时间
-export function JCMFormatDate(dateStr) {
+export const JCMFormatDate = (dateStr: string) => {
   let date = new Date(dateStr);
   let year = date.getFullYear();
   let month = date.getMonth() + 1;
@@ -102,12 +102,12 @@ export function JCMFormatDate(dateStr) {
   let minute = date.getMinutes();
   let second = date.getSeconds();
   return `${year}/${month}/${day} ${hour}:${minute}:${second}`;
-}
+};
 
 //将时间戳转换为正常时间
-export function JCMFormatTimestamp(timestamp) {
+export const JCMFormatTimestamp = (timestamp: number) => {
   const date = new Date(timestamp * 1000); // 转换为Date对象
-  const options = {
+  const options: Record<string, any> = {
     // 背景时间的格式选项
     year: 'numeric', // 年份（4位数字）
     month: 'long', // 月份的全称
@@ -117,40 +117,35 @@ export function JCMFormatTimestamp(timestamp) {
     second: 'numeric' // 秒钟（数字）
   };
   return date.toLocaleDateString('zh-CN', options);
-}
-/**
- * 复制到剪切板
- */
+};
 
-export function copyToClipboard(content) {
-  const clipboardData = window.clipboardData;
-  if (clipboardData) {
-    clipboardData.clearData();
-    clipboardData.setData('Text', content);
-    return true;
-  } else if (document.execCommand) {
-    const el = document.createElement('textarea');
-    el.value = content;
-    el.setAttribute('readonly', '');
-    el.style.position = 'absolute';
-    el.style.left = '-9999px';
-    document.body.appendChild(el);
-    el.select();
+// 复制到剪切板
+export const copyToClipboard = (content: string) => {
+  try {
+    const aux = document.createElement('input');
+    aux.setAttribute('value', content);
+    document.body.appendChild(aux);
+    aux.select();
     document.execCommand('copy');
-    document.body.removeChild(el);
+    document.body.removeChild(aux);
     return true;
+  } catch (error) {
+    console.log(error);
+    return false;
   }
-  return false;
-}
+};
 
-/**
- * 生成UUID
- * @returns
- */
-export function generateUUID() {
+// 复制到剪切板 + 提示
+export const copyToClipboardWithMessage = (content: string, message: string) => {
+  const isCopied = copyToClipboard(content);
+  isCopied && ElMessage.success(message);
+};
+
+// 生成UUID
+export const generateUUID = () => {
   let d = new Date().getTime();
   if (window.performance && typeof window.performance.now === 'function') {
-    d += performance.now(); //use high-precision timer if available
+    d += performance.now();
   }
   let uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
     let r = (d + Math.random() * 16) % 16 | 0;
@@ -158,11 +153,9 @@ export function generateUUID() {
     return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
   });
   return uuid;
-}
+};
 
-/**
- * 是否在pc端下
- */
-export function isPc() {
+// 是否在pc端下
+export const isPc = () => {
   return navigator.userAgent.toLowerCase().indexOf(' electron/') > -1;
-}
+};

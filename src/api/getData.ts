@@ -2,7 +2,7 @@ import lodash from 'lodash-es';
 
 import base from '@/api/index';
 import { AI_HEAD_IMG_URL } from '@/store/mutation-types';
-import { generateUUID } from '@/util/util';
+import { generateUUID } from '@/utils/util';
 import { desp_model, desp_keys, other_desps, other_desp_keys } from '@/constants/index';
 
 let axios = base.axios;

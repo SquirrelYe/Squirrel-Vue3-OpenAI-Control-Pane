@@ -8,6 +8,7 @@ import elementZh from 'element-plus/lib/locale/lang/zh-CN';
 
 // 配置i18n
 const i18n = createI18n({
+  legacy: false,
   locale: localStorage.getItem('lang') || 'zh', // 从缓存中获取当前的语言类型
   messages: {
     en: { ...enLocale, ...elementEn },

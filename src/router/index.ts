@@ -1,25 +1,25 @@
 import { createRouter, createWebHashHistory, createWebHistory } from 'vue-router';
 
-import ChatHome from '@/view/pages/chatHome/index.vue';
-import Setting from '@/view/pages/setting.vue';
-import UserInfo from '@/view/pages/user/userInfo.vue';
+import Chat from '@/view/pages/chat/Chat.vue';
+import About from '@/view/pages/about/About.vue';
+import UserInfo from '@/view/pages/profile/UserInfo.vue';
 
 export default createRouter({
-  history: process.env.IS_ELECTRON ? createWebHashHistory() : createWebHistory(),
+  history: createWebHistory(),
   routes: [
     {
       path: '/',
-      redirect: '/ChatHome'
+      redirect: '/Chat'
     },
     {
-      path: '/ChatHome',
-      name: 'ChatHome',
-      component: ChatHome
+      path: '/Chat',
+      name: 'Chat',
+      component: Chat
     },
     {
-      path: '/Setting',
-      name: 'Setting',
-      component: Setting
+      path: '/About',
+      name: 'About',
+      component: About
     },
     {
       path: '/UserInfo',
