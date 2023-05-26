@@ -1,0 +1,183 @@
+/**
+ * @description 聊天界面的通用组件样式
+ * @author SquirrelYe
+ * @time 2023.05.25 14:32:51
+ */
+
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.boxinput {
+  height: 30px;
+  line-height: 50px;
+  color: #fff;
+  margin-top: 10px;
+  margin-left: 20px;
+  margin-right: 20px;
+  width: 90%;
+  text-align: center;
+  height: 50px;
+  background-color: rgb(66, 70, 86);
+  border-radius: 15px;
+  border: 1px solid rgb(80, 85, 103);
+  position: relative;
+  cursor: pointer;
+}
+
+.icon {
+  margin-right: 10px;
+  vertical-align: middle;
+}
+
+.send {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background-color: rgb(66, 70, 86);
+  border: 0;
+  transition: 0.3s;
+  box-shadow: 0px 0px 5px 0px rgb(84, 89, 110);
+
+  &:hover {
+    box-shadow: 0px 0px 10px 0px rgb(91, 219, 239);
+  }
+}
+
+.weitiao {
+  margin-top: 10px;
+  width: 100%;
+  margin-left: 0px;
+  margin-right: 0px;
+  height: 50px;
+  background-color: rgb(66, 70, 86);
+  border-radius: 15px;
+  border: 2px solid rgb(34, 135, 225);
+  padding: 10px;
+  box-sizing: border-box;
+  transition: 0.2s;
+  font-size: 20px;
+  color: #fff;
+  font-weight: 100;
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.fineTune {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background-color: rgb(66, 70, 86);
+  border: 0;
+  transition: 0.3s;
+  box-shadow: 0px 0px 5px 0px rgb(84, 89, 110);
+
+  &:hover {
+    box-shadow: 0px 0px 10px 0px rgb(29, 144, 245);
+  }
+}
+
+.session {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background-color: rgb(66, 70, 86);
+  border: 0;
+  transition: 0.3s;
+  box-shadow: 0px 0px 5px 0px rgb(84, 89, 110);
+  margin-left: 0px;
+  margin-right: 0px;
+  width: 99%;
+
+  &:hover {
+    box-shadow: 0px 0px 10px 0px rgb(29, 144, 245);
+  }
+}
+
+.inputs {
+  width: 65%;
+  height: 50px;
+  background-color: rgb(66, 70, 86);
+  border-radius: 15px;
+  border: 2px solid rgb(34, 135, 225);
+  padding: 10px;
+  box-sizing: border-box;
+  transition: 0.2s;
+  font-size: 20px;
+  color: #fff;
+  font-weight: 100;
+  margin: 0 20px;
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.whiteText {
+  color: #fff;
+}
+
+::v-deep .el-input__inner {
+  background-color: transparent;
+  color: #409eff;
+}
+
+.setting {
+  margin-left: 0px;
+  padding-left: 10px;
+  color: rgb(176, 178, 189);
+}
+
+.setting.active {
+  color: #fff;
+}
+
+.setting:hover {
+  cursor: pointer;
+}
+
+.inputKey {
+  background-color: rgb(39, 42, 55);
+  border-color: #409eff;
+  color: #fff;
+  border-width: 0px;
+}
+
+.astrict {
+  width: 90%;
+}
+
+.block {
+  margin-top: 5%;
+
+  .demonstration {
+    color: aliceblue;
+    text-align: center;
+  }
+}
+
+.inputs {
+  width: 90%;
+  height: 50px;
+  background-color: rgb(66, 70, 86);
+  border-radius: 15px;
+  border: 2px solid rgb(34, 135, 225);
+  padding: 10px;
+  box-sizing: border-box;
+  transition: 0.2s;
+  font-size: 20px;
+  color: #fff;
+  font-weight: 100;
+  margin: 0 20px;
+
+  &:focus {
+    outline: none;
+  }
+}

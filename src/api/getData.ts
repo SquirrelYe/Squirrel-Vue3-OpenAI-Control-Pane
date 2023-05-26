@@ -1,4 +1,4 @@
-import lodash from 'lodash-es';
+import { findIndex } from 'lodash-es';
 
 import base from '@/api/index';
 import { AI_HEAD_IMG_URL } from '@/store/mutation-types';
@@ -9,7 +9,7 @@ let axios = base.axios;
 let baseUrl = base.baseUrl;
 
 // 根据name查找元素的索引
-const findIndexByName = (arr: Array<any>, name: string) => lodash.findIndex(arr, item => item === name || item.name === name);
+const findIndexByName = (arr: Array<any>, name: string) => findIndex(arr, item => item === name || item.name === name);
 
 // 获取描述
 const produceModelDesc = (model: string) => {
@@ -49,13 +49,12 @@ export const getModels = async (token: string) => {
   const modelsObj = [];
   //获取所有的模型
   const models: Array<any> = [...new Set(res.data.data.map((model: any) => model.id))].sort();
-  models.forEach(model_1 => {
+  models.forEach(model_name => {
     const modelObj = {
-      img: '',
-      name: model_1,
-      detail: produceModelDesc(model_1),
-      lastMsg: produceModelDesc(model_1),
-      id: model_1,
+      name: model_name,
+      detail: produceModelDesc(model_name),
+      lastMsg: produceModelDesc(model_name),
+      id: model_name,
       headImg: AI_HEAD_IMG_URL,
       showHeadImg: true
     };

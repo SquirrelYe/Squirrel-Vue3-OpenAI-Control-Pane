@@ -9,17 +9,18 @@ import i18n from '@/config/i18n';
 import { autoheight } from '@/directives';
 
 import App from '@/App.vue';
+import SvgIcon from '@/components/SvgIcon.vue';
 
+import 'virtual:svg-icons-register';
 import 'element-plus/dist/index.css';
 import '@/style.css';
 
 const pinia = createPinia();
 const app = createApp(App);
 
-for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
-  app.component(key, component);
-}
+for (const [key, component] of Object.entries(ElementPlusIconsVue)) app.component(key, component);
 
+app.component('SvgIcon', SvgIcon);
 app.directive('autoheight', autoheight);
 
 app.use(router);

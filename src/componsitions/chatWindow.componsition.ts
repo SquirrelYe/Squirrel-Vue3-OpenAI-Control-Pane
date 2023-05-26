@@ -3,7 +3,7 @@ import { useI18n } from 'vue-i18n';
 import { ElMessage } from 'element-plus';
 
 import base from '@/api/index';
-import { animation, getNowTime, JCMFormatDate } from '@/utils/util';
+import { animation, getNowTime, formatDateTime } from '@/utils/util';
 import { createImage, createImageEdit, createImageVariations, createTranscription, createTranslation } from '@/api/getData';
 import { AI_HEAD_IMG_URL, USER_HEAD_IMG_URL, USER_NAME } from '@/store/mutation-types';
 
@@ -12,7 +12,7 @@ import type { Ref } from 'vue';
 // 窗口数据设置
 export const useWindowConfiguration = () => {
   const buttonStatus = ref(true);
-  const personInfoSpan = ref([1, 17, 6]);
+  const chatWindowGridSpanSpan = ref([1, 17, 6]);
 
   // 监听窗口的变化
   const handleResize = () => {
@@ -22,7 +22,7 @@ export const useWindowConfiguration = () => {
         buttonStatus.value = false;
         const textareaMsg = document.getElementById('textareaMsg');
         textareaMsg.style.marginLeft = '0px';
-        personInfoSpan.value = [14, 0, 10];
+        chatWindowGridSpanSpan.value = [14, 0, 10];
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         if (isMobile) {
           document.querySelectorAll<HTMLElement>('.chatInputs')[0].style.margin = '0%';
@@ -32,9 +32,10 @@ export const useWindowConfiguration = () => {
       });
     } else {
       nextTick(() => {
+        document.querySelectorAll<HTMLElement>('.chatInputs')[0].style.margin = '3%';
         document.querySelectorAll<HTMLElement>('.chat-content')[0].style.height = '88%';
         buttonStatus.value = true;
-        personInfoSpan.value = [1, 17, 6];
+        chatWindowGridSpanSpan.value = [1, 17, 6];
       });
     }
   };
@@ -50,7 +51,7 @@ export const useWindowConfiguration = () => {
 
   return {
     buttonStatus,
-    personInfoSpan
+    chatWindowGridSpanSpan
   };
 };
 
@@ -81,7 +82,7 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
     const offsetHeight = scrollDom.offsetHeight;
     const scrollHeight = scrollDom.scrollHeight;
     // 当滚动到底部，设置 isAutoScroll 为 true
-    if (scrollTop + offsetHeight === scrollHeight) {
+    if (scrollTop + offsetHeight >= scrollHeight) {
       isAutoScroll.value = true;
     } else {
       // 否则，用户正在手动滑动，设置为 false，停止自动滚动
@@ -89,11 +90,20 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
     }
   };
 
+  // 获取窗口高度并滚动至最底层
+  const handleScrollBottom = () => {
+    nextTick(() => {
+      if (!isAutoScroll.value) return; // 如果 isAutoScroll 为 false，不执行滚动方法
+      const scrollDom = refChatContent.value;
+      animation(scrollDom);
+    });
+  };
+
   // 发送文字信息
   const handleSendText = () => {
     rows.value = 1;
 
-    const dateNow = JCMFormatDate(getNowTime());
+    const dateNow = formatDateTime(getNowTime());
     const params: Record<string, any> = {};
 
     nextTick(() => {
@@ -112,7 +122,7 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
 
       // 通过验证后，上传文件
       else {
-        const dateNow = JCMFormatDate(getNowTime());
+        const dateNow = formatDateTime(getNowTime());
         const formData = new FormData();
 
         formData.append('image', updateImage.value);
@@ -136,14 +146,14 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
           for (let imgInfo of data) {
             let imgResMsg = {
               headImg: AI_HEAD_IMG_URL,
-              name: props.frinedInfo.name,
-              time: JCMFormatDate(getNowTime()),
+              name: props.chatCompleteModelInfo.name,
+              time: formatDateTime(getNowTime()),
               msg: imgInfo.url,
               chatType: 1, // 信息类型，0文字，1图片
               extend: {
                 imgType: 2 // (1表情，2本地图片)
               },
-              uid: props.frinedInfo.id //uid
+              uid: props.chatCompleteModelInfo.id //uid
             };
             handleSendMsg(imgResMsg);
             srcImgList.value.push(imgInfo.url);
@@ -177,14 +187,14 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
           for (let imgInfo of data) {
             let imgResMsg = {
               headImg: AI_HEAD_IMG_URL,
-              name: props.frinedInfo.name,
-              time: JCMFormatDate(getNowTime()),
+              name: props.chatCompleteModelInfo.name,
+              time: formatDateTime(getNowTime()),
               msg: imgInfo.url,
-              chatType: 1, //信息类型，0文字，1图片
+              chatType: 1, // 信息类型，0文字，1图片
               extend: {
-                imgType: 2 //(1表情，2本地图片)
+                imgType: 2 // (1表情，2本地图片)
               },
-              uid: props.frinedInfo.id //uid
+              uid: props.chatCompleteModelInfo.id //uid
             };
             handleSendMsg(imgResMsg);
             srcImgList.value.push(imgInfo.url);
@@ -195,7 +205,7 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
 
       // 如果是文字模式则进入
       else {
-        params.model = props.frinedInfo.id;
+        params.model = props.chatCompleteModelInfo.id;
         params.max_tokens = props.settingInfo.chat.MaxTokens;
         params.temperature = props.settingInfo.chat.Temperature;
         params.top_p = props.settingInfo.chat.TopP;
@@ -205,19 +215,20 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
         params.presence_penalty = props.settingInfo.chat.PresencePenalty;
         params.frequency_penalty = props.settingInfo.chat.FrequencyPenalty;
 
-        let chatBeforResMsg = {
+        const chatBeforResMsg = {
           headImg: AI_HEAD_IMG_URL,
-          name: props.frinedInfo.name,
-          time: JCMFormatDate(getNowTime()),
+          name: props.chatCompleteModelInfo.name,
+          time: formatDateTime(getNowTime()),
           msg: '',
           chatType: 0, // 信息类型，0文字，1图片
-          uid: props.frinedInfo.id // uid
+          uid: props.chatCompleteModelInfo.id // uid
         };
-        if (props.frinedInfo.id === 'gpt-3.5-turbo' || props.frinedInfo.id === 'gpt-3.5-turbo-0301') {
+
+        if (props.chatCompleteModelInfo.id === 'gpt-3.5-turbo' || props.chatCompleteModelInfo.id === 'gpt-3.5-turbo-0301') {
           handleChatCompletion(params, chatBeforResMsg);
         } else {
           if (props.settingInfo.cutSetting === 0) {
-            if (props.frinedInfo.id === 'text-davinci-003') {
+            if (props.chatCompleteModelInfo.id === 'text-davinci-003') {
               handleCompletion(params, chatBeforResMsg);
             } else {
               ElMessage.error('暂时不支持gpt-3.5-turbo、gpt-3.5-turbo-0301、text-davinci-003以外的模型聊天~');
@@ -230,10 +241,11 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
           }
         }
       }
-      if (props.storeStatu == 0) {
-        emits('personCardSort', props.frinedInfo.id);
-      } else if (props.storeStatu == 1) {
-        emits('fineTunesCardSort', props.frinedInfo.id);
+
+      if (props.chatModelType == 0) {
+        emits('modelCardSort', props.chatCompleteModelInfo.id);
+      } else if (props.chatModelType == 1) {
+        emits('fineTunesCardSort', props.chatCompleteModelInfo.id);
       }
 
       inputMsg.value = '';
@@ -254,15 +266,6 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
     handleScrollBottom();
   };
 
-  // 获取窗口高度并滚动至最底层
-  const handleScrollBottom = () => {
-    nextTick(() => {
-      if (!isAutoScroll.value) return; // 如果 isAutoScroll 为 false，不执行滚动方法
-      const scrollDom = refChatContent.value;
-      animation(scrollDom, scrollDom.scrollHeight - scrollDom.offsetHeight);
-    });
-  };
-
   // 组装上下文数据
   const handleContextualAssemblyData = () => {
     const conversation = [];
@@ -270,7 +273,7 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
       if (chat.uid == 'jcm') {
         let my = { speaker: 'user', text: chat.msg };
         conversation.push(my);
-      } else if (chat.uid == props.frinedInfo.id) {
+      } else if (chat.uid == props.chatCompleteModelInfo.id) {
         let ai = { speaker: 'agent', text: chat.msg };
         conversation.push(ai);
       }
@@ -308,7 +311,6 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
         if (decoded_1.trim() === '[DONE]') {
           return;
         } else {
-          console.log(type);
           if (type === 'chat') {
             const response = JSON.parse(decoded_1).choices[0].delta.content ? JSON.parse(decoded_1).choices[0].delta.content : '';
             chatList.value[currentResLocation].msg = chatList.value[currentResLocation].msg + response;
@@ -360,12 +362,12 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
             'Reply in 中文';
           noUrlNetMessage += ' 您的问题: ' + textContext;
           itemContent = {};
-          itemContent.time = JCMFormatDate(getNowTime());
+          itemContent.time = formatDateTime(getNowTime());
           itemContent.msg = netMessage;
           itemContent.chatType = 0;
           itemContent.name = '网络';
           itemContent.headImg = '/img/search.png';
-          itemContent.uid = props.frinedInfo.id;
+          itemContent.uid = props.chatCompleteModelInfo.id;
 
           chatList.value.push(itemContent);
           let conversation = handleContextualAssemblyData();
@@ -390,8 +392,6 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
         };
       });
     }
-
-    console.log('---->', JSON.parse(JSON.stringify(chatList.value)));
 
     // 新增一个空的消息，占位，内容需要等待OpenAI返回
     handleSendMsg(chatBeforResMsg);
@@ -524,7 +524,7 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
     }
 
     // 通过验证后，上传文件
-    const dateNow = JCMFormatDate(getNowTime());
+    const dateNow = formatDateTime(getNowTime());
     const formData = new FormData();
     formData.append('image', file);
     formData.append('n', props.settingInfo.n);
@@ -535,9 +535,9 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
       name: USER_NAME,
       time: dateNow,
       msg: '',
-      chatType: 1, //信息类型，0文字，1图片, 2文件
+      chatType: 1, // 信息类型，0文字，1图片, 2文件
       extend: {
-        imgType: 2 //(1表情，2本地图片)
+        imgType: 2 // (1表情，2本地图片)
       },
       uid: 'jcm'
     };
@@ -557,14 +557,14 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
         for (let imgInfo of data) {
           let imgResMsg = {
             headImg: AI_HEAD_IMG_URL,
-            name: props.frinedInfo.name,
-            time: JCMFormatDate(getNowTime()),
+            name: props.chatCompleteModelInfo.name,
+            time: formatDateTime(getNowTime()),
             msg: imgInfo.url,
             chatType: 1, // 信息类型，0文字，1图片
             extend: {
               imgType: 2 // (1表情，2本地图片)
             },
-            uid: props.frinedInfo.id // uid
+            uid: props.chatCompleteModelInfo.id // uid
           };
           handleSendMsg(imgResMsg);
           srcImgList.value.push(imgInfo.url);
@@ -580,7 +580,7 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
 
   // 发送文件
   const handleSendFile = (e: any) => {
-    const dateNow = JCMFormatDate(getNowTime());
+    const dateNow = formatDateTime(getNowTime());
 
     let chatMsg: Record<string, any> = {
       headImg: USER_HEAD_IMG_URL,
@@ -633,7 +633,7 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
 
   // 发送Emoji
   const handleSendEmoji = (emoji: string) => {
-    const dateNow = JCMFormatDate(getNowTime());
+    const dateNow = formatDateTime(getNowTime());
 
     let chatMsg = {
       headImg: USER_HEAD_IMG_URL,
@@ -681,6 +681,7 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
     showEmoji,
     handleKeyDown,
     handleOnScroll,
+    handleScrollBottom,
     handleSendMsg,
     handleSendText,
     handleSendImg,
@@ -731,7 +732,7 @@ export const useChatWindowSendVoice = (props: Record<string, any>, emits: any) =
         const formData = new FormData();
         formData.append('file', file);
         formData.append('model', 'whisper-1');
-        formData.append('temperature', props.settingInfo.TemperatureAudio);
+        formData.append('temperature', props.settingInfo.temperatureAudio);
         formData.append('response_format', 'text');
 
         resolve(formData);
