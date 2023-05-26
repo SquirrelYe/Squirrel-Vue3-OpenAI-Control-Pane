@@ -1,5 +1,7 @@
 import { defineConfig, loadEnv } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import { createSvgIconsPlugin } from 'vite-plugin-svg-icons';
+
 import path from 'path';
 
 /**
@@ -40,7 +42,13 @@ export default defineConfig(({ command, mode }) => {
     // 环境变量
     envDir: path.resolve(__dirname, 'env'),
     envPrefix: 'VITE_',
-    plugins: [vue()],
+    plugins: [
+      vue(),
+      createSvgIconsPlugin({
+        iconDirs: [path.resolve(process.cwd(), 'src/assets/svgs')],
+        symbolId: 'icon-[dir]-[name]'
+      })
+    ],
     // 打包配置
     build: {
       target: 'modules',
