@@ -1,9 +1,9 @@
 <template>
-  <div class="role-card" :class="{ activeCard: roleInfo.act == prCurrent }">
+  <div class="role-card" :class="{ activeCard: promptInfo.act == prCurrent }">
     <div class="info">
       <div class="info-detail">
-        <div class="name">{{ roleInfo.act }}</div>
-        <div class="detail">{{ roleInfo.prompt.slice(0, 50) }}</div>
+        <div class="name">{{ promptInfo.act }}</div>
+        <div class="detail">{{ promptInfo.prompt.slice(0, 50) }}</div>
       </div>
     </div>
   </div>
@@ -13,7 +13,7 @@
 import { ref, watch } from 'vue';
 
 const props = defineProps({
-  roleInfo: { default: {}, type: Object },
+  promptInfo: { default: {}, type: Object },
   prCurrent: { default: '', type: String }
 });
 

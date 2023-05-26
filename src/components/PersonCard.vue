@@ -1,10 +1,11 @@
 <template>
-  <div class="person-card" :class="{ activeCard: personInfo.id == pcCurrent }">
+  <div class="person-card" :class="{ activeCard: chatModelInfo.id == pcCurrent }">
     <div class="info">
-      <HeadPortrait :imgUrl="personInfo.headImg" v-show="personInfo.showHeadImg" />\
+      <HeadPortrait :imgUrl="chatModelInfo.headImg" v-show="chatModelInfo.showHeadImg" />
+
       <div class="info-detail">
-        <div class="name">{{ personInfo.name ? personInfo.name.slice(0, 20) : personInfo.fineTunesStatus == 'pending' ? $t('person_card.train') : $t('person_card.cancel') }}</div>
-        <div class="detail">{{ personInfo.lastMsg.slice(0, 22) }}</div>
+        <div class="name">{{ chatModelInfo.name ? chatModelInfo.name.slice(0, 20) : chatModelInfo.fineTunesStatus == 'pending' ? $t('person_card.train') : $t('person_card.cancel') }}</div>
+        <div class="detail">{{ chatModelInfo.lastMsg.slice(0, 22) }}</div>
       </div>
     </div>
   </div>
@@ -15,7 +16,7 @@ import { ref, watch } from 'vue';
 import HeadPortrait from '@/components/HeadPortrait.vue';
 
 const props = defineProps({
-  personInfo: { default: {}, type: Object },
+  chatModelInfo: { default: {}, type: Object },
   pcCurrent: { default: '', type: String }
 });
 
@@ -55,6 +56,7 @@ const isActive = () => {
       flex-direction: column;
       overflow: hidden;
       text-overflow: ellipsis;
+      text-align: left;
       .name {
         color: #fff;
         overflow: hidden;

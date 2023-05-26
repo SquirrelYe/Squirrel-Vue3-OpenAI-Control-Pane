@@ -1,15 +1,13 @@
 <template>
   <div class="head-portrait">
-    <img :src="imgUrl" alt="Kevin Powell" />
+    <img :src="imgUrl" alt="风继续吹 SquirrelYe" />
   </div>
 </template>
 
 <script lang="ts" setup>
 import { USER_HEAD_IMG_URL } from '@/store/mutation-types';
 
-defineProps({
-  imgUrl: { default: USER_HEAD_IMG_URL, type: String }
-});
+defineProps({ imgUrl: { default: USER_HEAD_IMG_URL, type: String } });
 </script>
 
 <style lang="scss" scoped>

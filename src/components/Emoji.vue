@@ -16,7 +16,8 @@
 
 <script lang="ts" setup>
 import { ref } from 'vue';
-import { EventBus } from '@/utils/eventbus';
+
+const emits = defineEmits(['sendEmoji', 'closeEmoji']);
 
 const emojiList = [
   '/img/emoji/slightly-smiling-face.png',
@@ -48,12 +49,8 @@ const emojiList = [
   '/img/emoji/thought-balloon.png'
 ];
 
-const sendEmoji = (item: string) => {
-  EventBus.$emit('sendEmoji', item);
-};
-const closeEmoji = () => {
-  EventBus.$emit('closeEmoji');
-};
+const sendEmoji = (item: string) => emits('sendEmoji', item);
+const closeEmoji = () => emits('closeEmoji');
 </script>
 
 <style lang="scss" scoped>
