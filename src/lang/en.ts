@@ -109,7 +109,7 @@ export default {
     title: 'role'
   },
   setting: {
-    title: 'set',
+    title: 'setting',
     Language: 'Chinese Language'
   },
   file_card: {
