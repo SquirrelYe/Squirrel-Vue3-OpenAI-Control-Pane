@@ -142,7 +142,7 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
         handleSendMsg(chatMsg);
         inputMsg.value = '';
 
-        createImageEdit(formData, props.settingInfo.KeyMsg).then(data => {
+        createImageEdit(formData, props.settingInfo.openaiKey).then(data => {
           for (let imgInfo of data) {
             let imgResMsg = {
               headImg: AI_HEAD_IMG_URL,
@@ -183,7 +183,7 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
         params.prompt = inputMsg.value;
         params.n = props.settingInfo.n;
         params.size = props.settingInfo.size;
-        createImage(params, props.settingInfo.KeyMsg).then(data => {
+        createImage(params, props.settingInfo.openaiKey).then(data => {
           for (let imgInfo of data) {
             let imgResMsg = {
               headImg: AI_HEAD_IMG_URL,
@@ -405,7 +405,7 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
           method: 'POST',
           body: JSON.stringify({ ...params }),
           headers: {
-            Authorization: 'Bearer ' + props.settingInfo.KeyMsg,
+            Authorization: 'Bearer ' + props.settingInfo.openaiKey,
             'Content-Type': 'application/json',
             Accept: 'application/json'
           }
@@ -421,7 +421,7 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
           method: 'POST',
           body: JSON.stringify({ ...params }),
           headers: {
-            Authorization: 'Bearer ' + props.settingInfo.KeyMsg,
+            Authorization: 'Bearer ' + props.settingInfo.openaiKey,
             'Content-Type': 'application/json',
             Accept: 'application/json'
           }
@@ -466,7 +466,7 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
         method: 'POST',
         body: JSON.stringify({ ...params }),
         headers: {
-          Authorization: 'Bearer ' + props.settingInfo.KeyMsg,
+          Authorization: 'Bearer ' + props.settingInfo.openaiKey,
           'Content-Type': 'application/json'
         }
       }).then(response => {
@@ -552,7 +552,7 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
 
     handleSendMsg(chatMsg);
 
-    createImageVariations(formData, props.settingInfo.KeyMsg)
+    createImageVariations(formData, props.settingInfo.openaiKey)
       .then(data => {
         for (let imgInfo of data) {
           let imgResMsg = {
@@ -655,14 +655,14 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
   // 翻译/转录语音
   const handleTranslateVoice = (formData: FormData) => {
     if (props.settingInfo.translateEnglish) {
-      createTranslation(formData, props.settingInfo.KeyMsg).then(data => {
+      createTranslation(formData, props.settingInfo.openaiKey).then(data => {
         nextTick(() => {
           inputMsg.value = data;
         });
       });
     } else {
       formData.append('language', props.settingInfo.language);
-      createTranscription(formData, props.settingInfo.KeyMsg).then(data => {
+      createTranscription(formData, props.settingInfo.openaiKey).then(data => {
         nextTick(() => {
           inputMsg.value = data;
         });

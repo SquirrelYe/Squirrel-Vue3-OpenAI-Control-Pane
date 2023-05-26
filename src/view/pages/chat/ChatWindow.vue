@@ -3,20 +3,21 @@
     <!-- 头部展示 -->
     <div class="top">
       <el-row style="height: 70px">
-        <el-col :span="personInfoSpan[0]">
+        <el-col :span="chatWindowGridSpanSpan[0]">
           <div class="head-pic">
-            <HeadPortrait :imgUrl="frinedInfo.headImg"></HeadPortrait>
+            <HeadPortrait :imgUrl="chatCompleteModelInfo.headImg"></HeadPortrait>
           </div>
         </el-col>
 
-        <el-col :span="personInfoSpan[1]">
+        <el-col :span="chatWindowGridSpanSpan[1]">
           <div class="info-detail">
-            <div class="name">{{ frinedInfo.name }}</div>
-            <div class="detail">{{ frinedInfo.detail }}</div>
+            <div class="name">{{ chatCompleteModelInfo.name }}</div>
+            <div class="detail">{{ chatCompleteModelInfo.detail }}</div>
           </div>
         </el-col>
 
-        <el-col :span="personInfoSpan[2]">
+        <!-- 头部操作区域 -->
+        <el-col :span="chatWindowGridSpanSpan[2]">
           <div class="other-fun">
             <label @click="handleSyncOperation('msg:list:clear')">
               <span class="iconfont icon-qingchu"></span>
@@ -35,62 +36,51 @@
             </label>
             <input type="file" name="" id="imgFile" @change="handleSendImg" accept="image/*" />
             <input type="file" name="" id="docFile" @change="handleSendFile" accept="application/*,text/*" />
+
             <!-- 导入当前会话内容 -->
-            <input type="file" ref="refOnupdateJosnArr" @change="e => handleSyncOperation('msg:list:import:file', e)" style="display: none" />
+            <input type="file" ref="refOnUpdateJosnArr" @change="e => handleSyncOperation('msg:list:import:file', e)" style="display: none" />
           </div>
         </el-col>
       </el-row>
     </div>
 
     <!-- 加载进度 -->
-    <div v-show="!acqStatus">
-      <div class="line"></div>
-    </div>
+    <Loading :isShowLoading="acqStatus" />
 
     <!-- 聊天区域 -->
     <div class="botoom" style="background-color: rgb(50, 54, 68)">
       <!-- 聊天内容区域 -->
-      <div class="chat-content" id="chat-content" ref="refChatContent" @scroll="handleOnScroll">
+      <div class="chat-content" ref="refChatContent" @scroll="handleOnScroll">
         <div class="chat-wrapper" v-for="item in chatList" :key="item.id">
           <!-- 渲染GPT回复 -->
           <div class="chat-chatgpt" v-if="item.uid !== 'jcm'">
+            <!-- 信息类型，0文字，1图片, 2文件 -->
+
+            <!-- 渲染消息 -->
             <div class="chat-text" v-if="item.chatType == 0">
               <el-row :gutter="20">
                 <el-col :span="2">
-                  <svg
-                    t="1679666016648"
-                    @click="copyToClipboardWithMessage(item.msg, '已复制')"
-                    class="icon"
-                    viewBox="0 0 1024 1024"
-                    version="1.1"
-                    xmlns="http://www.w3.org/2000/svg"
-                    p-id="6241"
-                    width="22"
-                    height="22"
-                  >
-                    <path
-                      d="M661.333333 234.666667A64 64 0 0 1 725.333333 298.666667v597.333333a64 64 0 0 1-64 64h-469.333333A64 64 0 0 1 128 896V298.666667a64 64 0 0 1 64-64z m-21.333333 85.333333H213.333333v554.666667h426.666667v-554.666667z m191.829333-256a64 64 0 0 1 63.744 57.856l0.256 6.144v575.701333a42.666667 42.666667 0 0 1-85.034666 4.992l-0.298667-4.992V149.333333H384a42.666667 42.666667 0 0 1-42.368-37.674666L341.333333 106.666667a42.666667 42.666667 0 0 1 37.674667-42.368L384 64h447.829333z"
-                      fill="#909399"
-                      p-id="6242"
-                    ></path>
-                  </svg>
+                  <SvgIcon name="chat" @click="copyToClipboardWithMessage(item.msg, '已复制')" size="22"></SvgIcon>
                 </el-col>
                 <el-col :span="21"> </el-col>
               </el-row>
-
-              <Markdown class="markdown-area" :source="item.msg.trim()" v-bind="markdownOptions" :plugins="markdownPlugins"></Markdown>
+              <Markdown :content="item.msg.trim()"></Markdown>
             </div>
 
+            <!-- 渲染图片 -->
             <div class="chat-img" v-if="item.chatType == 1">
               <img :src="item.msg" alt="表情" v-if="item.extend.imgType == 1" style="width: 100px; height: 100px" />
               <el-image style="border-radius: 10px" :src="item.msg" :preview-src-list="srcImgList" v-else> </el-image>
             </div>
+
+            <!-- 渲染文件 -->
             <div class="chat-img" v-if="item.chatType == 2">
               <div class="word-file">
                 <FileCard :fileType="item.extend.fileType" :file="item.msg"></FileCard>
               </div>
             </div>
 
+            <!-- 渲染信息 -->
             <div class="info-time">
               <img :src="item.headImg" alt="" />
               <span>{{ item.name }}</span>
@@ -99,6 +89,8 @@
           </div>
 
           <!-- 渲染自身问题 -->
+
+          <!-- 信息类型，0文字，1图片, 2文件 -->
           <div class="chat-me" v-else>
             <div class="chat-text" v-if="item.chatType == 0">
               <span style="font-size: 16px">{{ item.msg }}</span>
@@ -112,6 +104,8 @@
                 <FileCard :fileType="item.extend.fileType" :file="item.msg"></FileCard>
               </div>
             </div>
+
+            <!-- 自身资料展示 -->
             <div class="info-time">
               <span>{{ item.name }}</span>
               <span>{{ item.time }}</span>
@@ -123,22 +117,24 @@
 
       <!-- 输入区域 -->
       <div class="chatInputs">
-        <!--表情-->
+        <!-- 表情 -->
         <div class="emoji boxinput" @click="handleSyncOperation('msg:operate:emoji:switch')" v-show="buttonStatus">
           <img src="/img/emoji/smiling-face.png" alt="" />
         </div>
-        <!--录音-->
+        <!-- 录音 -->
         <div class="luyin boxinput" @click="handleAsyncOperation('msg:voice:stop')" v-if="recording" v-show="buttonStatus">
           <el-icon style="margin-top: 17%"><Microphone /></el-icon>
         </div>
         <div class="luyin boxinput" @click="handleAsyncOperation('msg:voice:start')" v-if="!recording" v-show="buttonStatus">
           <el-icon style="margin-top: 17%"><Mute /></el-icon>
         </div>
-        <!--emoji表情列表-->
+
+        <!-- emoji表情列表 -->
         <div class="emoji-content" v-show="buttonStatus">
           <Emoji v-show="showEmoji" @sendEmoji="handleSendEmoji" @closeEmoji="handleSyncOperation('msg:operate:emoji:switch')"></Emoji>
         </div>
-        <!--输入框-->
+
+        <!-- 输入框 -->
         <textarea
           id="textareaMsg"
           :placeholder="$t('placeholder.question')"
@@ -157,7 +153,7 @@
           @keyup.enter="handleKeyDown"
         ></textarea>
 
-        <!--发送-->
+        <!-- 发送 -->
         <div>
           <div class="send boxinput" @click="handleSendText">
             <img src="/img/emoji/rocket.png" alt="" />
@@ -172,61 +168,51 @@
 import { ref } from 'vue';
 import { saveAs } from 'file-saver';
 import { useI18n } from 'vue-i18n';
-import { useRoute, useRouter } from 'vue-router';
-import Markdown from 'vue3-markdown-it';
-import MarkdownIt from 'markdown-it';
-import MarkdownItHighlightjs from 'markdown-it-highlightjs';
+// import { useRoute, useRouter } from 'vue-router';
 
 import HeadPortrait from '@/components/HeadPortrait.vue';
 import Emoji from '@/components/Emoji.vue';
 import FileCard from '@/components/FileCard.vue';
-
-import 'highlight.js/styles/monokai.css';
-
-import { useWindowConfiguration, useChatWindowSendMessages, useChatWindowSendVoice } from '@/componsitions/chatWindow.componsition';
+import Markdown from '@/components/Markdown.vue';
+import Loading from '@/components/Loading.vue';
 
 import { copyToClipboardWithMessage } from '@/utils/util';
+import { useWindowConfiguration, useChatWindowSendMessages, useChatWindowSendVoice } from '@/componsitions/chatWindow.componsition';
 
 const { t: $t } = useI18n();
-const route = useRoute();
-const router = useRouter();
+// const route = useRoute();
+// const router = useRouter();
 
-// 传值数据
+// 宏定义
 const props = defineProps({
-  storeStatu: Number,
+  chatModelType: Number,
   settingInfo: Object,
-  frinedInfo: Object,
+  chatCompleteModelInfo: Object,
   default: () => ({})
 });
-
-// 方法数据
-const emits = defineEmits(['personCardSort', 'fineTunesCardSort']);
+const emits = defineEmits(['modelCardSort', 'fineTunesCardSort']);
 
 // DOM数据
 const refChatContent = ref<HTMLElement>(null);
 const refTextInput = ref<HTMLElement>(null);
-const refOnupdateJosnArr = ref<HTMLElement>(null);
+const refOnUpdateJosnArr = ref<HTMLElement>(null);
 
 // 业务Hooks
-const { buttonStatus, personInfoSpan } = useWindowConfiguration();
-const { acqStatus, inputMsg, chatList, srcImgList, showEmoji, handleKeyDown, handleSendText, handleOnScroll, handleSendImg, handleSendFile, handleSendEmoji, handleTranslateVoice } = useChatWindowSendMessages(props, emits, refChatContent); // prettier-ignore
+const { buttonStatus, chatWindowGridSpanSpan } = useWindowConfiguration();
+const { acqStatus, inputMsg, chatList, srcImgList, showEmoji, handleKeyDown, handleSendText, handleOnScroll, handleScrollBottom, handleSendImg, handleSendFile, handleSendEmoji, handleTranslateVoice } = useChatWindowSendMessages(props, emits, refChatContent); // prettier-ignore
 const { recording, handleStartRecording, handleStopRecording } = useChatWindowSendVoice(props, emits);
 
-// 页面数据
-const fileArrays = ref([]);
-const inputsStatus = ref(true);
-const friendInfo = ref({});
-const screenshot = ref('');
-const contentBackImageUrl = ref('https://bpic.51yuansu.com/backgd/cover/00/31/39/5bc8088deeedd.jpg?x-oss-process=image/resize,w_780');
-
-const markdownOptions = {
-  html: true, // 启用 HTML 标签解析
-  linkify: true, // 将 URL 自动转换为链接
-  typographer: true, // 启用智能标点符号替换
-  breaks: true // 启用回车换行
+// 暴露函数
+const getMesList = () => chatList.value;
+const inputMessage = (msg: string) => (inputMsg.value = msg);
+const clearMsgList = () => (chatList.value = []);
+const assignmentMesList = (list: Array<any>) => (chatList.value = list);
+const sendMsg = (msg: any) => {
+  chatList.value.push(msg);
+  handleScrollBottom();
 };
 
-const markdownPlugins = [{ plugin: MarkdownIt }, { plugin: MarkdownItHighlightjs }];
+defineExpose({ inputMessage, getMesList, clearMsgList, assignmentMesList, sendMsg });
 
 // 同步操作
 // msg:list:clear -> 清空当前内容
@@ -241,7 +227,7 @@ const handleSyncOperation = (type: string, args?: any) => {
       break;
     }
     case 'msg:list:import:json': {
-      refOnupdateJosnArr.value.click();
+      refOnUpdateJosnArr.value.click();
       break;
     }
     case 'msg:list:export:json': {
@@ -290,6 +276,7 @@ const handleAsyncOperation = async (type: string, args?: any) => {
 };
 </script>
 
+<!-- 常规组件样式 -->
 <style lang="scss" scoped>
 .iconfont:hover {
   color: rgb(29, 144, 245);
@@ -297,7 +284,6 @@ const handleAsyncOperation = async (type: string, args?: any) => {
     opacity: 1;
   }
 }
-
 ::v-deep {
   .el-textarea__inner {
     background-color: rgb(66, 70, 86);
@@ -321,77 +307,7 @@ textarea::-webkit-scrollbar-thumb {
 }
 </style>
 
-<style lang="scss" scoped>
-.line {
-  position: relative;
-  width: 94%;
-  margin-left: 2%;
-  height: 2px;
-  background: linear-gradient(to right, red, yellow, green);
-  animation: shrink-and-expand 2s ease-in-out infinite;
-}
-.line::before,
-.line::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  width: 50%;
-  height: 100%;
-  background: inherit;
-}
-
-.line::before {
-  border-top-left-radius: 2px;
-  border-bottom-left-radius: 2px;
-  left: 0;
-  transform-origin: left;
-  animation: shrink-left 2s ease-in-out infinite;
-}
-
-.line::after {
-  border-top-left-radius: 2px;
-  border-bottom-left-radius: 2px;
-  right: 0;
-  transform-origin: right;
-  animation: shrink-right 2s ease-in-out infinite;
-}
-
-@keyframes shrink-and-expand {
-  0%,
-  100% {
-    transform: scaleX(1);
-  }
-
-  50% {
-    transform: scaleX(0);
-  }
-}
-
-@keyframes shrink-left {
-  0%,
-  50% {
-    transform: scaleX(1);
-  }
-
-  50.1%,
-  100% {
-    transform: scaleX(0);
-  }
-}
-
-@keyframes shrink-right {
-  0%,
-  50% {
-    transform: scaleX(1);
-  }
-
-  50.1%,
-  100% {
-    transform: scaleX(0);
-  }
-}
-</style>
-
+<!-- 内容展示区域样式 -->
 <style lang="scss" scoped>
 .chat-window {
   width: 100%;
@@ -489,11 +405,6 @@ textarea::-webkit-scrollbar-thumb {
           max-width: 650px;
           border-radius: 20px 20px 20px 5px;
           background-color: #fff;
-        }
-
-        .markdown-area {
-          color: #000;
-          text-align: left;
         }
 
         .chat-img {
@@ -595,6 +506,7 @@ textarea::-webkit-scrollbar-thumb {
       margin: 3%;
       display: flex;
       background-color: #323644;
+      border-radius: 20px;
       .boxinput {
         width: 50px;
         height: 50px;

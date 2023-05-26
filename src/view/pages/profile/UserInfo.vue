@@ -1,5 +1,5 @@
 <template>
-  <el-container style="height: 94vh"> xxx </el-container>
+  <el-container style="height: 94vh"> Your Profile Here ... </el-container>
 </template>
 
 <script lang="ts" setup></script>

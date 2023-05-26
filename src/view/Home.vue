@@ -20,7 +20,7 @@ import * as util from '@/utils/util';
 const isPc = computed(() => util.isPc());
 
 const asideStatus = ref(true);
-const firstSize = ref(true);
+const isFirstSize = ref(true);
 const width = ref(0);
 
 onBeforeMount(() => {
@@ -46,9 +46,9 @@ const resize = () => {
 
 // 监听窗口尺寸的变化
 const handleResize = () => {
-  if (firstSize.value) {
+  if (isFirstSize.value) {
     resize();
-    firstSize.value = false;
+    isFirstSize.value = false;
     width.value = window.innerWidth;
   }
   if (width.value != window.innerWidth) {
