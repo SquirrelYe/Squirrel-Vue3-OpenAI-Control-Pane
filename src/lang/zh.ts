@@ -18,6 +18,13 @@ export default {
     learningRate: '学习率',
     ftsuffix: '后缀'
   },
+  chatoperation: {
+    msg_clear: '清除当前聊天记录',
+    msg_import: '导入聊天记录',
+    msg_export: '导出聊天记录',
+    msg_img_upload: '图片 > 改图模式开启后，选择上传图片',
+    msg_file_upload: '上传文件'
+  },
   session: {
     title: '会话',
     create: '创建会话',
@@ -28,8 +35,8 @@ export default {
   model: {
     title: '模型',
     talk: '对话',
-    online_title: '联网',
-    online: '打开之后联网查询',
+    online_title: 'DuckDuckGo 搜索',
+    online: '打开之后联网查询，查询服务为：DuckDuckGo，此处会讲搜索结果汇总发给ChatGPT，并要求GPT总结并生成回答',
     suffix_title: '后缀',
     suffix: '在生成文本末尾添加的文本片段',
     max_tokens_title: '最大单词数',

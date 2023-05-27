@@ -18,6 +18,13 @@ export default {
     learningRate: 'Learning rate',
     ftsuffix: 'Suffix'
   },
+  chatoperation: {
+    msg_clear: 'Clear the current chat record',
+    msg_import: 'Import chat history',
+    msg_export: 'Export chat history',
+    msg_img_upload: 'Image > After the image change mode is turned on, select the image to upload',
+    msg_file_upload: 'Upload file'
+  },
   session: {
     title: 'session',
     create: 'create session',
@@ -28,8 +35,9 @@ export default {
   model: {
     title: 'model',
     talk: 'chat',
-    online_title: 'online',
-    online: 'Online query after opening',
+    online_title: 'DuckDuckGo Search',
+    // '打开之后联网查询，查询服务为：DuckDuckGo，此处会讲搜索结果汇总发给ChatGPT，并要求GPT总结并生成回答',
+    online: 'Use DuckDuckGo to search, and then use ChatGPT to summarize and generate answers',
     suffix_title: 'suffix',
     suffix: 'A text snippet to add at the end of the generated text',
     max_tokens_title: 'Maximum word count',
@@ -55,8 +63,8 @@ export default {
   },
   slightly: {
     title: {
-      whole: 'FT',
-      abbreviation: 'FT'
+      whole: 'finetune',
+      abbreviation: 'finetune'
     },
     retrieveFineTuning: 'Retrieve fine-tuning',
     cancelFineTuning: 'Cancel fine-tuning',
