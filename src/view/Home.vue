@@ -61,7 +61,6 @@ const handleResize = () => {
 <style lang="scss" scoped>
 .home {
   width: 95vw;
-  height: 95vh;
   background-color: rgb(39, 42, 55);
   border-radius: 15px;
   position: absolute;

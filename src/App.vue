@@ -30,6 +30,7 @@ const windowMove = (canMove: boolean) => {
   padding: 0;
   margin: 0;
   font-family: 'SSFY';
+  font-size: 14px;
 }
 #app {
   width: 100vw;
