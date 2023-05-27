@@ -7,6 +7,8 @@ import { animation, getNowTime, formatDateTime } from '@/utils/util';
 import { createImage, createImageEdit, createImageVariations, createTranscription, createTranslation } from '@/api/getData';
 import { AI_HEAD_IMG_URL, USER_HEAD_IMG_URL, USER_NAME } from '@/store/mutation-types';
 
+import { OpenAIChatAPI } from '@/api/chat.api';
+
 import type { Ref } from 'vue';
 
 // 窗口数据设置
@@ -58,7 +60,6 @@ export const useWindowConfiguration = () => {
 // 聊天窗口发送数据
 export const useChatWindowSendMessages = (props: Record<string, any>, emits: any, refChatContent: Ref<HTMLElement>) => {
   const isAutoScroll = ref(true);
-  const rows = ref(1);
   const acqStatus = ref(true);
   const updateImage = ref(null);
   const inputMsg = ref('');
@@ -101,17 +102,14 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
 
   // 发送文字信息
   const handleSendText = () => {
-    rows.value = 1;
-
     const dateNow = formatDateTime(getNowTime());
     const params: Record<string, any> = {};
 
-    nextTick(() => {
-      acqStatus.value = false;
-    });
+    acqStatus.value = false;
 
-    // 打开图片开关
+    // 1. 打开图片开关，修改图片模式开启
     if (props.settingInfo.openChangePicture) {
+      // 检查是否上传文件
       if (updateImage.value == null) {
         nextTick(() => {
           acqStatus.value = true;
@@ -136,7 +134,7 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
           time: dateNow,
           msg: inputMsg.value,
           chatType: 0, // 信息类型，0文字，1图片
-          uid: 'jcm' // uid
+          uid: 'player_fake_id' // uid
         };
 
         handleSendMsg(chatMsg);
@@ -166,7 +164,7 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
       }
     }
 
-    // 文本信息
+    // 2. 发送文本信息，聊天 or 创建图片模式
     if (inputMsg.value) {
       const chatMsg = {
         headImg: USER_HEAD_IMG_URL,
@@ -174,11 +172,11 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
         time: dateNow,
         msg: inputMsg.value,
         chatType: 0, // 信息类型，0文字，1图片
-        uid: 'jcm' // uid
+        uid: 'player_fake_id' // uid
       };
       handleSendMsg(chatMsg);
 
-      // 如果是图片模式则进入待开发，不过可用改状态使用
+      // ① 创建图片模式
       if (props.settingInfo.openProductionPicture) {
         params.prompt = inputMsg.value;
         params.n = props.settingInfo.n;
@@ -203,7 +201,7 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
         });
       }
 
-      // 如果是文字模式则进入
+      // ② 如果是文字模式则进入，文本聊天
       else {
         params.model = props.chatCompleteModelInfo.id;
         params.max_tokens = props.settingInfo.chat.MaxTokens;
@@ -224,21 +222,16 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
           uid: props.chatCompleteModelInfo.id // uid
         };
 
-        if (props.chatCompleteModelInfo.id === 'gpt-3.5-turbo' || props.chatCompleteModelInfo.id === 'gpt-3.5-turbo-0301') {
-          handleChatCompletion(params, chatBeforResMsg);
-        } else {
+        if (props.chatCompleteModelInfo.id === 'gpt-3.5-turbo' || props.chatCompleteModelInfo.id === 'gpt-3.5-turbo-0301') handleChatCompletion(params, chatBeforResMsg);
+        else {
+          // 0对话，1图片，2音频，3微调，4文件，5会话，6角色，7界面
           if (props.settingInfo.cutSetting === 0) {
-            if (props.chatCompleteModelInfo.id === 'text-davinci-003') {
-              handleCompletion(params, chatBeforResMsg);
-            } else {
+            if (props.chatCompleteModelInfo.id === 'text-davinci-003') handleCompletion(params, chatBeforResMsg);
+            else {
               ElMessage.error('暂时不支持gpt-3.5-turbo、gpt-3.5-turbo-0301、text-davinci-003以外的模型聊天~');
-              nextTick(() => {
-                acqStatus.value = true;
-              });
+              nextTick(() => (acqStatus.value = true));
             }
-          } else {
-            handleCompletion(params, chatBeforResMsg);
-          }
+          } else handleCompletion(params, chatBeforResMsg);
         }
       }
 
@@ -253,9 +246,7 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
 
     // 输入有误
     else {
-      nextTick(() => {
-        acqStatus.value = true;
-      });
+      nextTick(() => (acqStatus.value = true));
       ElMessage.warning($t('message.msg_empty'));
     }
   };
@@ -270,7 +261,7 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
   const handleContextualAssemblyData = () => {
     const conversation = [];
     for (let chat of chatList.value.filter(chat => chat.chatType === 0)) {
-      if (chat.uid == 'jcm') {
+      if (chat.uid == 'player_fake_id') {
         let my = { speaker: 'user', text: chat.msg };
         conversation.push(my);
       } else if (chat.uid == props.chatCompleteModelInfo.id) {
@@ -332,7 +323,8 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
     let itemContent: Record<string, any> = {};
     let noUrlNetMessage = '';
 
-    // 打开联网对话
+    // 打开联网对话，追加 DuckDuckGo 搜索结果
+    // 注意：此处会将搜索结果追加到对话中，并追加Prompt（要求GPT根据给出的搜索结果进行总结，并用中文输出）
     if (props.settingInfo.openNet) {
       let context = 'max_results=' + props.settingInfo.max_results + '&q=' + textContext + '&region=us-en';
       await fetch('https://search.freechatgpt.cc/search?' + context)
@@ -360,17 +352,18 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
             'Query: ' +
             textContext +
             'Reply in 中文';
+
           noUrlNetMessage += ' 您的问题: ' + textContext;
           itemContent = {};
           itemContent.time = formatDateTime(getNowTime());
           itemContent.msg = netMessage;
           itemContent.chatType = 0;
-          itemContent.name = '网络';
-          itemContent.headImg = '/img/search.png';
+          itemContent.name = 'DuckDuckGo';
+          itemContent.headImg = '/img/logo/duckduckgo.png';
           itemContent.uid = props.chatCompleteModelInfo.id;
-
           chatList.value.push(itemContent);
-          let conversation = handleContextualAssemblyData();
+
+          const conversation = handleContextualAssemblyData();
           params.messages = conversation.map(item => {
             return {
               role: item.speaker === 'user' ? 'user' : 'assistant',
@@ -382,7 +375,7 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
         });
     }
 
-    // 未开启联网对话
+    // 未开启联网对话，组装上下文数据
     else {
       let conversation = handleContextualAssemblyData();
       params.messages = conversation.map(item => {
@@ -395,21 +388,15 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
 
     // 新增一个空的消息，占位，内容需要等待OpenAI返回
     handleSendMsg(chatBeforResMsg);
+
+    // 获取当前消息的位置
     const currentResLocation = chatList.value.length - 1;
 
     // 发起请求，获取OpenAI返回的消息
     try {
       // 开启流式对话
       if (props.settingInfo.chat.stream) {
-        await fetch(base.baseUrl + '/v1/chat/completions', {
-          method: 'POST',
-          body: JSON.stringify({ ...params }),
-          headers: {
-            Authorization: 'Bearer ' + props.settingInfo.openaiKey,
-            'Content-Type': 'application/json',
-            Accept: 'application/json'
-          }
-        }).then(response => {
+        await new OpenAIChatAPI(props.settingInfo.openaiKey, props.settingInfo.organization).createChatStreamCompletion(params).then(response => {
           const reader = response.body.getReader();
           handleReadStream(reader, currentResLocation, 'chat');
         });
@@ -417,32 +404,21 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
 
       // 关闭流式对话
       else {
-        await fetch(base.baseUrl + '/v1/chat/completions', {
-          method: 'POST',
-          body: JSON.stringify({ ...params }),
-          headers: {
-            Authorization: 'Bearer ' + props.settingInfo.openaiKey,
-            'Content-Type': 'application/json',
-            Accept: 'application/json'
-          }
-        })
-          .then(response => response.json())
+        await new OpenAIChatAPI(props.settingInfo.openaiKey, props.settingInfo.organization)
+          .createChatCompletion(params)
+          .then(response => response.data)
           .then(data => {
             const content = data.choices[0].message.content; // 获取"content"字段的值
             let decodedArray = content.split('');
-            decodedArray.forEach((decoded: string) => {
-              chatList.value[currentResLocation].msg = chatList.value[currentResLocation].msg + decoded;
-            });
+            decodedArray.forEach((decoded: string) => (chatList.value[currentResLocation].msg = chatList.value[currentResLocation].msg + decoded));
           });
       }
     } catch (error) {
       // 异常捕获，填充展示
       const content = '网络不稳定或key余额不足，请重试或更换key'; // 获取"content"字段的值
       let decodedArray = content.split('');
-      decodedArray.forEach(decoded => {
-        chatList.value[currentResLocation].msg = chatList.value[currentResLocation].msg + decoded;
-      });
-      console.error(error);
+      decodedArray.forEach(decoded => (chatList.value[currentResLocation].msg = chatList.value[currentResLocation].msg + decoded));
+      console.error('xxxxxx', error);
     }
 
     acqStatus.value = true;
@@ -539,7 +515,7 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
       extend: {
         imgType: 2 // (1表情，2本地图片)
       },
-      uid: 'jcm'
+      uid: 'player_fake_id'
     };
 
     if (!e || !window.FileReader) return; // 看是否支持FileReader
@@ -591,10 +567,10 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
       extend: {
         fileType: '' // (1word，2excel，3ppt，4pdf，5zpi, 6txt)
       },
-      uid: 'jcm'
+      uid: 'player_fake_id'
     };
 
-    let files = e.target.files[0]; //图片文件名
+    let files = e.target.files[0]; // 文件名
     chatMsg.msg = files;
 
     if (files) {
@@ -644,7 +620,7 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
       extend: {
         imgType: 1 // (1表情，2本地图片)
       },
-      uid: 'jcm'
+      uid: 'player_fake_id'
     };
 
     showEmoji.value = !showEmoji.value;
@@ -672,7 +648,6 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
 
   return {
     isAutoScroll,
-    rows,
     acqStatus,
     updateImage,
     inputMsg,
