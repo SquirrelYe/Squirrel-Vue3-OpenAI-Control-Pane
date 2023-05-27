@@ -31,7 +31,6 @@ const markdownPlugins = [{ plugin: MarkdownIt }, { plugin: MarkdownItHighlightjs
   -webkit-text-size-adjust: 100%;
   color: #24292e;
   font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
-  font-size: 16px;
   line-height: 1.5;
   word-wrap: break-word;
   text-align: left;

@@ -3,7 +3,10 @@
     <div class="info">
       <div class="info-detail">
         <div class="detail">
-          <div style="padding: 10px">{{ sessionInfo.title }}</div>
+          <div class="detail-content">
+            {{ sessionInfo.id }}. &nbsp;
+            {{ sessionInfo.title }}
+          </div>
         </div>
       </div>
     </div>
@@ -25,9 +28,7 @@ watch(
   () => isActive()
 );
 
-const isActive = () => {
-  current.value = props.pcCurrent;
-};
+const isActive = () => (current.value = props.pcCurrent);
 </script>
 
 <style lang="scss" scoped>
@@ -37,16 +38,22 @@ const isActive = () => {
   border-radius: 10px;
   background-color: rgb(50, 54, 68);
   position: relative;
-  margin: 25px 0;
+  margin: 0 0 25px 0;
   cursor: pointer;
   .info {
     width: auto;
     .info-detail {
       margin-top: 5px;
-      margin-left: 20px;
       .detail {
         color: #fff;
         font-size: 15px;
+        .detail-content {
+          padding: 10px 5px;
+          text-align: left;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
       }
     }
   }

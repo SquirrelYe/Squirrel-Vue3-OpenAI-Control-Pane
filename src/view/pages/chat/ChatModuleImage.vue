@@ -4,14 +4,14 @@
       <el-tooltip class="item" effect="dark" :content="$t('image.production_title')" placement="top">
         <span class="demonstration">{{ $t('image.production') }}</span>
       </el-tooltip>
-      <el-switch v-model="SettingInfo.openProductionPicture" :width="defaulWidth" style="margin-left: 15%"></el-switch>
+      <el-switch v-model="SettingInfo.openProductionPicture" :width="defaulWidth" style=""></el-switch>
     </div>
 
     <div class="block">
       <el-tooltip class="item" effect="dark" :content="$t('image.change_title')" placement="top">
         <span class="demonstration">{{ $t('image.change') }}</span>
       </el-tooltip>
-      <el-switch v-model="SettingInfo.openChangePicture" :width="defaulWidth" style="margin-left: 15%"></el-switch>
+      <el-switch v-model="SettingInfo.openChangePicture" :width="defaulWidth" style=""></el-switch>
     </div>
 
     <div class="block">

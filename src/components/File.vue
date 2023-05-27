@@ -46,7 +46,7 @@ const truncateString = (str: string, num: number) => {
   border-radius: 10px;
   background-color: rgb(50, 54, 68);
   position: relative;
-  margin: 25px 0;
+  margin: 0 0 25px 0;
   cursor: pointer;
   .info {
     position: absolute;

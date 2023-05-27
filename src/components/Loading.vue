@@ -1,5 +1,5 @@
 <template>
-  <div v-show="!isShowLoading">
+  <div v-show="!acqStatus">
     <div class="line"></div>
   </div>
 </template>
@@ -7,9 +7,7 @@
 <script lang="ts" setup>
 import { ref } from 'vue';
 
-defineProps({
-  isShowLoading: { type: Boolean, required: true, default: false }
-});
+defineProps({ acqStatus: { type: Boolean, required: true, default: false } });
 </script>
 
 <style lang="scss" scoped>

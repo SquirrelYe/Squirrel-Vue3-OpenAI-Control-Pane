@@ -2,7 +2,7 @@
   <div>
     <!-- 创建会话 -->
     <div class="session boxinput" @click="handleSyncOperation('session:new')">
-      <SvgIcon name="contact" size="25"></SvgIcon>
+      <SvgIcon name="contact" size="25" style="margin-right: 10px"></SvgIcon>
       {{ $t('session.create') }}
     </div>
 
@@ -72,7 +72,7 @@ const handleSyncOperation = (type: string, args?: any) => {
           // 清除当前窗口数据
           props.clearMsgList();
         } else {
-          obj.title = msgList[0].msg;
+          obj.title = msgList[msgList.length - 1].msg;
           obj.dataList = msgList;
           let tempSessionList = curSessionList.value;
           tempSessionList.push(obj);
@@ -81,10 +81,6 @@ const handleSyncOperation = (type: string, args?: any) => {
           // 清除当前窗口数据
           props.clearMsgList();
         }
-      }
-      // 数据长度为1，不创建会话
-      else if ((msgList.length = 1)) {
-        props.clearMsgList(); // 清除当前窗口数据
       }
       break;
     }

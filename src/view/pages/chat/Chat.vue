@@ -15,7 +15,7 @@
     <!-- 左侧操作区域 -->
     <div class="chatSlider" style="width: 20%" v-show="isShowModelList">
       <div class="title" style="text-align: center">
-        <h2>OpenAI Manager</h2>
+        <h2>OpenAI Control Panel Vue3</h2>
       </div>
 
       <div class="online-person" style="margin-top: 5%">
@@ -46,17 +46,17 @@
         <!-- 模型操作 -->
         <div v-show="cutSetting == 0">
           <input class="inputs" v-model="modelSearch" style="margin-top: 10px" :placeholder="$t('placeholder.model_name')" />
-          <div class="s-wrapper">
+          <div class="s-wrapper" style="padding-left: 0; margin-top: 15px">
             <div class="personList" v-for="chatModel in chatModelList" :key="chatModel.id" @click="clickPerson(chatModel)">
-              <PersonCard :chatModelInfo="chatModel" :modelCurrent="modelCurrent"></PersonCard>
+              <ModelCard :chatModelInfo="chatModel" :modelCurrent="modelCurrent"></ModelCard>
             </div>
           </div>
         </div>
 
         <!-- 会话 -->
         <div v-show="cutSetting == 1">
-          <input class="inputs" v-model="sessionSearch" style="margin-top: 10px" :placeholder="$t('placeholder.session_name')" />
-          <div class="s-wrapper">
+          <!-- <input class="inputs" v-model="sessionSearch" style="margin-top: 10px" :placeholder="$t('placeholder.session_name')" /> -->
+          <div class="s-wrapper" style="padding-left: 0">
             <div v-for="sessionInfo in sessionList" :key="sessionInfo.id" @click="clickSession(sessionInfo)">
               <Session :sessionInfo="sessionInfo" :modelCurrent="sessionCurrent"></Session>
             </div>
@@ -68,7 +68,7 @@
           <input class="inputs" v-model="fineTuningSearch" style="margin-top: 10px" :placeholder="$t('placeholder.slightly_name')" />
           <div class="s-wrapper">
             <div class="personList" v-for="fineTuningInfo in fineTuningList" :key="fineTuningInfo.id" @click="clickFineTuning(fineTuningInfo)">
-              <PersonCard :chatModelInfo="fineTuningInfo" :modelCurrent="finetuneModelCurrent"></PersonCard>
+              <ModelCard :chatModelInfo="fineTuningInfo" :modelCurrent="finetuneModelCurrent"></ModelCard>
             </div>
           </div>
         </div>
@@ -185,9 +185,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-import type { Ref } from 'vue';
-
-import PersonCard from '@/components/PersonCard.vue';
+import ModelCard from '@/components/ModelCard.vue';
 import Session from '@/components/Session.vue';
 import File from '@/components/File.vue';
 
@@ -215,7 +213,7 @@ const refChatWindow = ref(null);
 
 // 参数定义
 const fileSearch = ref('');
-const sessionSearch = ref('');
+const sessionSearch = ref(''); // 暂时不打开
 const modelSearch = ref(''); // 模型搜索数据
 const fineTuningSearch = ref(''); // 微调搜索数据
 
@@ -238,6 +236,7 @@ const SettingInfo = ref({
   n: 1,
   size: '256x256',
   language: 'zh',
+
   chat: {
     suffix: '',
     MaxTokens: 1000,
@@ -290,7 +289,14 @@ const getSettings = computed(() => {
   ];
 });
 const defaultModel = computed(() => {
-  return { name: 'ChatGPT', detail: $t('index.detail'), lastMsg: $t('index.lastMsg'), id: 'gpt-3.5-turbo', headImg: AI_HEAD_IMG_URL, showHeadImg: true };
+  return {
+    name: 'ChatGPT',
+    detail: $t('index.detail'),
+    lastMsg: $t('index.lastMsg'),
+    id: 'gpt-3.5-turbo',
+    headImg: AI_HEAD_IMG_URL,
+    showHeadImg: true
+  };
 });
 
 // 初始化数据
@@ -324,13 +330,14 @@ watch(
       else fileList.value = fileCacheList.value;
     }
     // 会话变化
-    if (newSessionSearch !== oldSessionSearch) {
-      sessionCacheList.value = sessionList.value;
-      if (sessionList.value) sessionList.value = sessionCacheList.value.filter(model => model.id.includes(newSessionSearch));
-      else sessionList.value = sessionCacheList.value;
-    }
+    // if (newSessionSearch !== oldSessionSearch) {
+    //   sessionCacheList.value = sessionList.value;
+    //   if (sessionList.value) sessionList.value = sessionCacheList.value.filter(model => model.title.includes(newSessionSearch));
+    //   else sessionList.value = sessionCacheList.value;
+    // }
   }
 );
+
 watch(
   () => SettingInfo.value,
   (newSettingInfo, oldSettingInfo) => {
@@ -413,7 +420,7 @@ const clickPerson = (info: any) => {
 };
 // 会话被点击
 const clickSession = (info: any) => {
-  sessionCurrent.value = info.id;
+  sessionCurrent.value = info.id.toString();
   assignmentMesList(info.dataList);
 };
 // 微调模型被点击
@@ -481,7 +488,7 @@ const clickFile = (info: any) => {
       }
       .s-wrapper {
         padding-left: 10px;
-        height: 70vh;
+        height: calc(100vh - 250px);
         margin-top: 10px;
         overflow: hidden;
         overflow-y: scroll;

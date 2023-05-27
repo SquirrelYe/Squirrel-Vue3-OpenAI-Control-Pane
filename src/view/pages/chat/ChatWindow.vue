@@ -12,28 +12,48 @@
         <el-col :span="chatWindowGridSpanSpan[1]">
           <div class="info-detail">
             <div class="name">{{ chatCompleteModelInfo.name }}</div>
-            <div class="detail">{{ chatCompleteModelInfo.detail }}</div>
+            <div class="detail" :title="chatCompleteModelInfo.detail">{{ chatCompleteModelInfo.detail }}</div>
           </div>
         </el-col>
 
         <!-- 头部操作区域 -->
         <el-col :span="chatWindowGridSpanSpan[2]">
           <div class="other-fun">
-            <label @click="handleSyncOperation('msg:list:clear')">
-              <span class="iconfont icon-qingchu"></span>
-            </label>
-            <label @click="handleSyncOperation('msg:list:import:json')">
-              <span class="iconfont icon-daoru"></span>
-            </label>
-            <label @click="handleSyncOperation('msg:list:export:json')">
-              <span class="iconfont icon-daochu"></span>
-            </label>
-            <label for="imgFile">
-              <span class="iconfont icon-tupian"></span>
-            </label>
-            <label for="docFile">
-              <span class="iconfont icon-wenben"></span>
-            </label>
+            <!-- 清除聊天记录 -->
+            <el-tooltip class="item" effect="dark" :content="$t('chatoperation.msg_clear')" placement="top">
+              <label @click="handleSyncOperation('msg:list:clear')">
+                <span class="iconfont icon-qingchu"></span>
+              </label>
+            </el-tooltip>
+
+            <!-- 导入聊天记录 -->
+            <el-tooltip class="item" effect="dark" :content="$t('chatoperation.msg_import')" placement="top">
+              <label @click="handleSyncOperation('msg:list:import:json')">
+                <span class="iconfont icon-daoru"></span>
+              </label>
+            </el-tooltip>
+
+            <!-- 导出聊天记录 -->
+            <el-tooltip class="item" effect="dark" :content="$t('chatoperation.msg_export')" placement="top">
+              <label @click="handleSyncOperation('msg:list:export:json')">
+                <span class="iconfont icon-daochu"></span>
+              </label>
+            </el-tooltip>
+
+            <!-- 上传文件 -->
+            <el-tooltip class="item" effect="dark" :content="$t('chatoperation.msg_img_upload')" placement="top">
+              <label for="imgFile">
+                <span class="iconfont icon-tupian"></span>
+              </label>
+            </el-tooltip>
+
+            <!-- 上传文本 -->
+            <el-tooltip class="item" effect="dark" :content="$t('chatoperation.msg_file_upload')" placement="top">
+              <label for="docFile">
+                <span class="iconfont icon-wenben"></span>
+              </label>
+            </el-tooltip>
+
             <input type="file" name="" id="imgFile" @change="handleSendImg" accept="image/*" />
             <input type="file" name="" id="docFile" @change="handleSendFile" accept="application/*,text/*" />
 
@@ -45,7 +65,7 @@
     </div>
 
     <!-- 加载进度 -->
-    <Loading :isShowLoading="acqStatus" />
+    <Loading :acqStatus="acqStatus" />
 
     <!-- 聊天区域 -->
     <div class="botoom" style="background-color: rgb(50, 54, 68)">
@@ -53,7 +73,7 @@
       <div class="chat-content" ref="refChatContent" @scroll="handleOnScroll">
         <div class="chat-wrapper" v-for="item in chatList" :key="item.id">
           <!-- 渲染GPT回复 -->
-          <div class="chat-chatgpt" v-if="item.uid !== 'jcm'">
+          <div class="chat-chatgpt" v-if="item.uid !== 'player_fake_id'">
             <!-- 信息类型，0文字，1图片, 2文件 -->
 
             <!-- 渲染消息 -->
@@ -93,7 +113,7 @@
           <!-- 信息类型，0文字，1图片, 2文件 -->
           <div class="chat-me" v-else>
             <div class="chat-text" v-if="item.chatType == 0">
-              <span style="font-size: 16px">{{ item.msg }}</span>
+              <span>{{ item.msg }}</span>
             </div>
             <div class="chat-img" v-if="item.chatType == 1">
               <img :src="item.msg" alt="表情" v-if="item.extend.imgType == 1" style="width: 100px; height: 100px" />
@@ -123,10 +143,10 @@
         </div>
         <!-- 录音 -->
         <div class="luyin boxinput" @click="handleAsyncOperation('msg:voice:stop')" v-if="recording" v-show="buttonStatus">
-          <el-icon style="margin-top: 17%"><Microphone /></el-icon>
+          <el-icon style="margin-top: 17%"><Microphone style="width: 25px; height: 25px" /></el-icon>
         </div>
         <div class="luyin boxinput" @click="handleAsyncOperation('msg:voice:start')" v-if="!recording" v-show="buttonStatus">
-          <el-icon style="margin-top: 17%"><Mute /></el-icon>
+          <el-icon style="margin-top: 17%"><Mute style="width: 25px; height: 25px" /></el-icon>
         </div>
 
         <!-- emoji表情列表 -->
@@ -339,8 +359,13 @@ textarea::-webkit-scrollbar-thumb {
 
       .detail {
         color: #9e9e9e;
+        text-align: left;
         font-size: 13px;
         margin-top: 2px;
+        width: 450px;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
       }
     }
 
@@ -552,7 +577,7 @@ textarea::-webkit-scrollbar-thumb {
         padding: 10px;
         box-sizing: border-box;
         transition: 0.2s;
-        font-size: 20px;
+        font-size: 16px;
         color: #fff;
         font-weight: 100;
         margin: 0 20px;

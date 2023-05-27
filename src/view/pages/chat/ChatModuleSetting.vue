@@ -1,12 +1,15 @@
 <template>
   <div>
+    <!-- 更改背景图片 -->
     <div class="block">
       <el-tooltip class="item" effect="dark" content="将图片的url路径填入此处即可设置聊天背景。" placement="top">
         <span class="demonstration">聊天背景</span>
       </el-tooltip>
       <input class="inputs" v-model="SettingInfo.contentImageUrl" placeholder="设置聊天界面的背景URL" style="margin-top: 10px; width: 100%; margin-left: 0px; margin-right: 0px" />
     </div>
-    <div class="session boxinput" @click="changeLanguage" style="margin-left: 0px; margin-right: 0px; width: 99%">
+
+    <!-- 切换语言 -->
+    <div class="session boxinput" @click="changeLanguage" style="margin-left: 0px; margin-right: 0px; margin-top: 20px">
       <span class="iconfont icon-iconyuanbanben_fanyi" style="color: #fff; margin-right: 10px"></span>
       {{ $t('setting.Language') }}
     </div>

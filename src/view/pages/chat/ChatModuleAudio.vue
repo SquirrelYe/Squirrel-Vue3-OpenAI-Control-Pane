@@ -5,7 +5,7 @@
       <el-tooltip class="item" effect="dark" :content="$t('audio.to_text_title')" placement="top">
         <span class="demonstration">{{ $t('audio.to_text') }}</span>
       </el-tooltip>
-      <el-switch v-model="SettingInfo.translateEnglish" :width="defaulWidth" style="margin-left: 15%"></el-switch>
+      <el-switch v-model="SettingInfo.translateEnglish" :width="defaulWidth" style=""></el-switch>
     </div>
 
     <!-- 语言 -->

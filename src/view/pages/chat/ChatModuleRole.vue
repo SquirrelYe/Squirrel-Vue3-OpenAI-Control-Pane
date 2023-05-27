@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="block">
+    <div class="">
       <input class="weitiao" v-model="roleSearch" :placeholder="$t('placeholder.role_name')" />
     </div>
     <div class="personList" v-for="promptInfo in promptList" :key="promptInfo.act" @click="handleRoleClick(promptInfo)">

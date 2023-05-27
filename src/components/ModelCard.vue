@@ -27,9 +27,7 @@ watch(
   () => isActive()
 );
 
-const isActive = () => {
-  current.value = props.pcCurrent;
-};
+const isActive = () => (current.value = props.pcCurrent);
 </script>
 
 <style lang="scss" scoped>
@@ -39,7 +37,7 @@ const isActive = () => {
   border-radius: 10px;
   background-color: rgb(50, 54, 68);
   position: relative;
-  margin: 25px 0;
+  margin: 0 0 25px 0;
   cursor: pointer;
   .info {
     position: absolute;
@@ -57,6 +55,7 @@ const isActive = () => {
       overflow: hidden;
       text-overflow: ellipsis;
       text-align: left;
+      width: calc(100% - 80px);
       .name {
         color: #fff;
         overflow: hidden;

@@ -3,7 +3,7 @@
     <!-- 上传 -->
     <div class="fineTune boxinput" @click="handleSyncOperation('file:upload')" style="margin-left: 0px; margin-right: 0px; width: 99%">
       <input type="file" ref="refFileInput" style="display: none" @change="e => handleAsyncOperation('file:upload:change', e)" />
-      <SvgIcon name="upload" size="30"></SvgIcon>
+      <SvgIcon name="upload" size="25" style="margin-right: 10px"></SvgIcon>
       {{ $t('file.upload') }}
     </div>
 

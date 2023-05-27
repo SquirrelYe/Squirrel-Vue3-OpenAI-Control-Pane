@@ -1,23 +1,22 @@
 <template>
   <div class="file-card">
-    <img src="@/assets/img/fileImg/unknowfile.png" alt="" v-if="fileType == 0" />
-    <img src="@/assets/img/fileImg/word.png" alt="" v-else-if="fileType == 1" />
-    <img src="@/assets/img/fileImg/excel.png" alt="" v-else-if="fileType == 2" />
-    <img src="@/assets/img/fileImg/ppt.png" alt="" v-else-if="fileType == 3" />
-    <img src="@/assets/img/fileImg/pdf.png" alt="" v-else-if="fileType == 4" />
-    <img src="@/assets/img/fileImg/zpi.png" alt="" v-else-if="fileType == 5" />
-    <img src="@/assets/img/fileImg/txt.png" alt="" v-else />
+    <img src="/img/fileImg/unknowfile.png" alt="" v-if="fileType == 0" />
+    <img src="/img/fileImg/word.png" alt="" v-else-if="fileType == 1" />
+    <img src="/img/fileImg/excel.png" alt="" v-else-if="fileType == 2" />
+    <img src="/img/fileImg/ppt.png" alt="" v-else-if="fileType == 3" />
+    <img src="/img/fileImg/pdf.png" alt="" v-else-if="fileType == 4" />
+    <img src="/img/fileImg/zpi.png" alt="" v-else-if="fileType == 5" />
+    <img src="/img/fileImg/txt.png" alt="" v-else />
 
     <div class="word">
       <span>{{ file.name || $t('file_card.unknown') }}</span>
-      <span>{{ file.size }}</span>
+      <span>{{ file.size }} Bytes</span>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { ref, watch, onMounted } from 'vue';
-import { EventBus } from '@/utils/eventbus';
 
 const props = defineProps({
   fileType: { default: 0, type: Number },
@@ -62,6 +61,7 @@ onMounted(() => {
       width: 90%;
       display: inline-block;
       color: #fff;
+      text-align: left;
     }
     span:first-child {
       font-size: 14px;
