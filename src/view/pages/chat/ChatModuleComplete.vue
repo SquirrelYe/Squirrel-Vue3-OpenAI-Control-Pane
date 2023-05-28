@@ -53,7 +53,7 @@
         <el-slider class="astrict" v-model="SettingInfo.chat.PresencePenalty" :step="0.1" :min="-2" :max="2"></el-slider>
       </div>
 
-      <!-- 最大单词数量 -->
+      <!-- 最大Token数量，参考：https://platform.openai.com/tokenizer -->
       <div class="block">
         <el-tooltip class="item" effect="dark" :content="$t('model.max_tokens')" placement="top">
           <span class="demonstration" style="">{{ $t('model.max_tokens_title') }}</span>

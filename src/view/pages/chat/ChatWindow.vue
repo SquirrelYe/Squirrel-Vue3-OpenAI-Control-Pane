@@ -282,8 +282,8 @@ const handleSyncOperation = (type: string, args?: any) => {
 const handleAsyncOperation = async (type: string, args?: any) => {
   switch (type) {
     case 'msg:voice:stop': {
-      const formData: any = await handleStopRecording();
-      await handleTranslateVoice(formData);
+      const result: any = await handleStopRecording();
+      await handleTranslateVoice(result);
       break;
     }
     case 'msg:voice:start': {

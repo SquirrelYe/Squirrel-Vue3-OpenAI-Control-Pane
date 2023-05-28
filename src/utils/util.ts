@@ -11,17 +11,14 @@ export const animation = (scrollDom: any, fn1?: any) => {
   clearInterval(scrollDom.timer); // 每次开定时器之前先清除掉定时器
   scrollDom.timer = setInterval(() => {
     // 步长计算公式：越来越小，步长取整
-    const scrollTop = scrollDom.scrollTop;
+    const scrollTop = Math.ceil(scrollDom.scrollTop);
     const scrollHeight = scrollDom.scrollHeight;
     const offsetHeight = scrollDom.offsetHeight;
-
-    const target = scrollHeight - offsetHeight;
-    const step = (target - scrollTop) / 10 > 0 ? Math.ceil((target - scrollTop) / 10) : Math.floor((target - scrollTop) / 10);
-    if (scrollTop >= target) {
+    if (scrollTop >= scrollHeight - offsetHeight) {
       clearInterval(scrollDom.timer);
       if (fn1) fn1();
     } else {
-      scrollDom.scrollTop = scrollDom.scrollTop + step;
+      scrollDom.scrollTop = scrollDom.scrollTop + 10;
     }
   }, 10);
 };

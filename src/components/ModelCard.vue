@@ -1,5 +1,5 @@
 <template>
-  <div class="person-card" :class="{ activeCard: chatModelInfo.id == pcCurrent }">
+  <div class="person-card" :class="{ activeCard: chatModelInfo.id == modelCurrent }">
     <div class="info">
       <HeadPortrait :imgUrl="chatModelInfo.headImg" v-show="chatModelInfo.showHeadImg" />
 
@@ -17,17 +17,17 @@ import HeadPortrait from '@/components/HeadPortrait.vue';
 
 const props = defineProps({
   chatModelInfo: { default: {}, type: Object },
-  pcCurrent: { default: '', type: String }
+  modelCurrent: { default: '', type: String }
 });
 
 const current = ref('');
 
 watch(
-  () => props.pcCurrent,
+  () => props.modelCurrent,
   () => isActive()
 );
 
-const isActive = () => (current.value = props.pcCurrent);
+const isActive = () => (current.value = props.modelCurrent);
 </script>
 
 <style lang="scss" scoped>

@@ -106,7 +106,7 @@
           <input
             class="inputs"
             v-model="SettingInfo.openaiKey"
-            @focusout="getModelList(SettingInfo.openaiKey)"
+            @focusout="getModelList(SettingInfo.openaiKey, SettingInfo.organization)"
             :placeholder="$t('placeholder.openai_key')"
             type="password"
             auto-complete="new-password"
@@ -226,8 +226,9 @@ const cutSetting = ref(1); // 0对话，1图片，2音频，3微调，4文件，
 const SettingInfo = ref({
   cutSetting: 1,
   openaiKey: import.meta.env.VITE_APP_OPENAI_API_KEY,
+  organization: import.meta.env.VITE_APP_OPENAI_Organization_ID,
   readefile: false, // TODO: 未实现
-  translateEnglish: false,
+  translateAudio: false,
   openProductionPicture: false,
   openChangePicture: false,
   temperatureAudio: 0,
@@ -238,13 +239,16 @@ const SettingInfo = ref({
   language: 'zh',
 
   chat: {
-    suffix: '',
-    MaxTokens: 1000,
+    // 下面是ChatComplete不存在的参数
+    suffix: '', // 后缀
+    echo: false, // 回显
+
+    // 下面是ChatComplete
+    MaxTokens: 1000, // 最大Token
     Temperature: 1,
     TopP: 1,
     n: 1,
     stream: true,
-    echo: false,
     stop: '',
     FrequencyPenalty: 0,
     PresencePenalty: 0
@@ -301,14 +305,14 @@ const defaultModel = computed(() => {
 
 // 初始化数据
 onMounted(() => {
-  if (SettingInfo.value.openaiKey) getModelList(SettingInfo.value.openaiKey);
+  if (SettingInfo.value.openaiKey) getModelList(SettingInfo.value.openaiKey, SettingInfo.value.organization);
   chatCompleteModelInfo.value = defaultModel.value;
 });
 
 // 监听属性
 watch(
   () => [modelSearch.value, sessionSearch.value, fineTuningSearch.value, fileSearch.value],
-  ([oldModelSearch, oldSessionSearch, oldFineTuningSearch, oldFileSearch], [newModelSearch, newSessionSearch, newFineTuningSearch, newFileSearch]) => {
+  ([newModelSearch, newSessionSearch, newFineTuningSearch, newFileSearch], [oldModelSearch, oldSessionSearch, oldFineTuningSearch, oldFileSearch]) => {
     // Model变化
     if (newModelSearch !== oldModelSearch) {
       if (chatModelList.value) chatModelList.value = chatModelCacheList.value.filter(model => model.id.includes(newModelSearch));
@@ -370,10 +374,11 @@ const clearCurrent = () => {
   // 清除当前选择的文件
   fileCurrent.value = '';
 };
+
 // 模型列表被点击
 const modelClick = () => {
   clearCurrent();
-  getModelList(SettingInfo.value.openaiKey);
+  getModelList(SettingInfo.value.openaiKey, SettingInfo.value.organization);
   // 清除被点击的微调对象
   fineTuningInfo.value = {};
   SettingStatus.value = 0;
@@ -396,7 +401,7 @@ const fineTuningClick = () => {
   cutSetting.value = 2;
   SettingInfo.value.cutSetting = 2;
   // 获取微调模型列表
-  getFineTunessList(SettingInfo.value.openaiKey);
+  getFineTunessList(SettingInfo.value.openaiKey, SettingInfo.value.organization);
 };
 // 文件列表被点击
 const fileClick = () => {
@@ -407,7 +412,7 @@ const fileClick = () => {
   cutSetting.value = 3;
   SettingInfo.value.cutSetting = 3;
   // 获取微调模型列表
-  getFileList(SettingInfo.value.openaiKey);
+  getFileList(SettingInfo.value.openaiKey, SettingInfo.value.organization);
 };
 
 // 模型被点击
@@ -435,12 +440,7 @@ const clickFineTuning = (info: any) => {
 };
 // 文件被点击
 const clickFile = (info: any) => {
-  chatCompleteModelInfo.value = {
-    name: info.id,
-    detail: info.detail,
-    lastMsg: info.lastMsg,
-    id: info.id
-  };
+  chatCompleteModelInfo.value = { name: info.id, detail: info.detail, lastMsg: info.lastMsg, id: info.id };
   fileCurrent.value = info.fileId;
   fileInfo.value = info;
 };

@@ -2,12 +2,19 @@ import { ref, onBeforeMount, onUnmounted, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ElMessage } from 'element-plus';
 
-import base from '@/api/index';
 import { animation, getNowTime, formatDateTime } from '@/utils/util';
-import { createImage, createImageEdit, createImageVariations, createTranscription, createTranslation } from '@/api/getData';
 import { AI_HEAD_IMG_URL, USER_HEAD_IMG_URL, USER_NAME } from '@/store/mutation-types';
 
+import { OpenAICompetionAPI } from '@/api/completions.api';
 import { OpenAIChatAPI } from '@/api/chat.api';
+import { OpenAIEditAPI } from '@/api/edits.api';
+import { OpenAIImageAPI } from '@/api/images.api';
+import { OpenAIEmbeddingAPI } from '@/api/embeddings.api';
+import { OpenAIAudioAPI } from '@/api/audio.api';
+import { OpenAIModerationAPI } from '@/api/moderations.api';
+import { OpenAIEngineAPI } from '@/api/engines.api';
+
+import { DuckDuckGoSearchAPI } from '@/api/duckduckgo.api';
 
 import type { Ref } from 'vue';
 
@@ -83,12 +90,9 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
     const offsetHeight = scrollDom.offsetHeight;
     const scrollHeight = scrollDom.scrollHeight;
     // 当滚动到底部，设置 isAutoScroll 为 true
-    if (scrollTop + offsetHeight >= scrollHeight) {
-      isAutoScroll.value = true;
-    } else {
-      // 否则，用户正在手动滑动，设置为 false，停止自动滚动
-      isAutoScroll.value = false;
-    }
+    if (Math.ceil(scrollTop) + offsetHeight >= scrollHeight) isAutoScroll.value = true;
+    // 否则，用户正在手动滑动，设置为 false，停止自动滚动
+    else isAutoScroll.value = false;
   };
 
   // 获取窗口高度并滚动至最底层
@@ -101,7 +105,7 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
   };
 
   // 发送文字信息
-  const handleSendText = () => {
+  const handleSendText = async () => {
     const dateNow = formatDateTime(getNowTime());
     const params: Record<string, any> = {};
 
@@ -111,38 +115,35 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
     if (props.settingInfo.openChangePicture) {
       // 检查是否上传文件
       if (updateImage.value == null) {
-        nextTick(() => {
-          acqStatus.value = true;
-        });
+        nextTick(() => (acqStatus.value = true));
         ElMessage.warning($t('message.edit_picture'));
         return;
       }
 
       // 通过验证后，上传文件
       else {
-        const dateNow = formatDateTime(getNowTime());
-        const formData = new FormData();
-
-        formData.append('image', updateImage.value);
-        formData.append('prompt', inputMsg.value);
-        formData.append('n', props.settingInfo.n);
-        formData.append('size', props.settingInfo.size);
-
         const chatMsg = {
           headImg: USER_HEAD_IMG_URL,
           name: USER_NAME,
-          time: dateNow,
+          time: formatDateTime(getNowTime()),
           msg: inputMsg.value,
           chatType: 0, // 信息类型，0文字，1图片
           uid: 'player_fake_id' // uid
         };
 
         handleSendMsg(chatMsg);
-        inputMsg.value = '';
 
-        createImageEdit(formData, props.settingInfo.openaiKey).then(data => {
-          for (let imgInfo of data) {
-            let imgResMsg = {
+        const image = updateImage.value;
+        const prompt = inputMsg.value;
+        const mask = null;
+        const n = props.settingInfo.n;
+        const size = props.settingInfo.size;
+        const responseFormat = 'url';
+        const user = '';
+
+        new OpenAIImageAPI(props.settingInfo.openaiKey, props.settingInfo.organization).createImageEdit(image, prompt, mask, n, size, responseFormat, user).then(response => {
+          for (const imgInfo of response.data.data) {
+            const imgResMsg = {
               headImg: AI_HEAD_IMG_URL,
               name: props.chatCompleteModelInfo.name,
               time: formatDateTime(getNowTime()),
@@ -153,12 +154,16 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
               },
               uid: props.chatCompleteModelInfo.id //uid
             };
+
             handleSendMsg(imgResMsg);
             srcImgList.value.push(imgInfo.url);
           }
+
           updateImage.value = null;
           acqStatus.value = true;
         });
+
+        inputMsg.value = '';
 
         return;
       }
@@ -181,8 +186,9 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
         params.prompt = inputMsg.value;
         params.n = props.settingInfo.n;
         params.size = props.settingInfo.size;
-        createImage(params, props.settingInfo.openaiKey).then(data => {
-          for (let imgInfo of data) {
+
+        new OpenAIImageAPI(props.settingInfo.openaiKey, props.settingInfo.organization).createImage(params).then(response => {
+          for (let imgInfo of response.data.data) {
             let imgResMsg = {
               headImg: AI_HEAD_IMG_URL,
               name: props.chatCompleteModelInfo.name,
@@ -194,16 +200,19 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
               },
               uid: props.chatCompleteModelInfo.id //uid
             };
+
             handleSendMsg(imgResMsg);
             srcImgList.value.push(imgInfo.url);
+            acqStatus.value = true;
           }
-          acqStatus.value = true;
         });
       }
 
       // ② 如果是文字模式则进入，文本聊天
       else {
         params.model = props.chatCompleteModelInfo.id;
+
+        // 组装Complete参数
         params.max_tokens = props.settingInfo.chat.MaxTokens;
         params.temperature = props.settingInfo.chat.Temperature;
         params.top_p = props.settingInfo.chat.TopP;
@@ -222,24 +231,26 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
           uid: props.chatCompleteModelInfo.id // uid
         };
 
+        // 执行Chat Complete
         if (props.chatCompleteModelInfo.id === 'gpt-3.5-turbo' || props.chatCompleteModelInfo.id === 'gpt-3.5-turbo-0301') handleChatCompletion(params, chatBeforResMsg);
+        // 执行普通Complete
         else {
-          // 0对话，1图片，2音频，3微调，4文件，5会话，6角色，7界面
+          // 0模型，1会话，2微调，3文件
+          // 选择对话模型
           if (props.settingInfo.cutSetting === 0) {
             if (props.chatCompleteModelInfo.id === 'text-davinci-003') handleCompletion(params, chatBeforResMsg);
             else {
               ElMessage.error('暂时不支持gpt-3.5-turbo、gpt-3.5-turbo-0301、text-davinci-003以外的模型聊天~');
               nextTick(() => (acqStatus.value = true));
             }
-          } else handleCompletion(params, chatBeforResMsg);
+          }
+          // 不是对话模型
+          else handleCompletion(params, chatBeforResMsg);
         }
       }
 
-      if (props.chatModelType == 0) {
-        emits('modelCardSort', props.chatCompleteModelInfo.id);
-      } else if (props.chatModelType == 1) {
-        emits('fineTunesCardSort', props.chatCompleteModelInfo.id);
-      }
+      if (props.chatModelType == 0) emits('modelCardSort', props.chatCompleteModelInfo.id);
+      if (props.chatModelType == 1) emits('fineTunesCardSort', props.chatCompleteModelInfo.id);
 
       inputMsg.value = '';
     }
@@ -260,14 +271,9 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
   // 组装上下文数据
   const handleContextualAssemblyData = () => {
     const conversation = [];
-    for (let chat of chatList.value.filter(chat => chat.chatType === 0)) {
-      if (chat.uid == 'player_fake_id') {
-        let my = { speaker: 'user', text: chat.msg };
-        conversation.push(my);
-      } else if (chat.uid == props.chatCompleteModelInfo.id) {
-        let ai = { speaker: 'agent', text: chat.msg };
-        conversation.push(ai);
-      }
+    for (const chat of chatList.value.filter(chat => chat.chatType === 0)) {
+      if (chat.uid == 'player_fake_id') conversation.push({ speaker: 'user', text: chat.msg });
+      if (chat.uid == props.chatCompleteModelInfo.id) conversation.push({ speaker: 'agent', text: chat.msg });
     }
     return conversation;
   };
@@ -283,31 +289,31 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
     let decodedArray = decoded.split('data: ');
     let longstr = '';
 
-    decodedArray.forEach(decoded_1 => {
+    decodedArray.forEach(decoded_str => {
       try {
-        decoded_1 = decoded_1.trim();
+        decoded_str = decoded_str.trim();
         if (longstr === '') {
-          JSON.parse(decoded_1);
+          JSON.parse(decoded_str);
         } else {
-          decoded_1 = longstr + decoded_1;
+          decoded_str = longstr + decoded_str;
           longstr = '';
-          JSON.parse(decoded_1);
+          JSON.parse(decoded_str);
         }
       } catch (e) {
-        longstr = decoded_1;
-        decoded_1 = '';
+        longstr = decoded_str;
+        decoded_str = '';
       }
 
-      if (decoded_1 !== '') {
-        if (decoded_1.trim() === '[DONE]') {
+      if (decoded_str !== '') {
+        if (decoded_str.trim() === '[DONE]') {
           return;
         } else {
           if (type === 'chat') {
-            const response = JSON.parse(decoded_1).choices[0].delta.content ? JSON.parse(decoded_1).choices[0].delta.content : '';
+            const response = JSON.parse(decoded_str).choices[0].delta.content ? JSON.parse(decoded_str).choices[0].delta.content : '';
             chatList.value[currentResLocation].msg = chatList.value[currentResLocation].msg + response;
             handleScrollBottom();
           } else {
-            const response_1 = JSON.parse(decoded_1).choices[0].text;
+            const response_1 = JSON.parse(decoded_str).choices[0].text;
             chatList.value[currentResLocation].msg = chatList.value[currentResLocation].msg + response_1;
           }
         }
@@ -326,8 +332,8 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
     // 打开联网对话，追加 DuckDuckGo 搜索结果
     // 注意：此处会将搜索结果追加到对话中，并追加Prompt（要求GPT根据给出的搜索结果进行总结，并用中文输出）
     if (props.settingInfo.openNet) {
-      let context = 'max_results=' + props.settingInfo.max_results + '&q=' + textContext + '&region=us-en';
-      await fetch('https://search.freechatgpt.cc/search?' + context)
+      await new DuckDuckGoSearchAPI(props.settingInfo.max_results, 'us-en')
+        .createDuckDuckGoSearch(textContext)
         .then(response => response.json())
         .then(data => {
           let netMessage = 'Web search results:  ';
@@ -353,7 +359,6 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
             textContext +
             'Reply in 中文';
 
-          noUrlNetMessage += ' 您的问题: ' + textContext;
           itemContent = {};
           itemContent.time = formatDateTime(getNowTime());
           itemContent.msg = netMessage;
@@ -371,6 +376,7 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
             };
           });
 
+          noUrlNetMessage += ' 您的问题: ' + textContext;
           itemContent.msg = noUrlNetMessage;
         });
     }
@@ -379,10 +385,7 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
     else {
       let conversation = handleContextualAssemblyData();
       params.messages = conversation.map(item => {
-        return {
-          role: item.speaker === 'user' ? 'user' : 'assistant',
-          content: item.text
-        };
+        return { role: item.speaker === 'user' ? 'user' : 'assistant', content: item.text };
       });
     }
 
@@ -396,29 +399,27 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
     try {
       // 开启流式对话
       if (props.settingInfo.chat.stream) {
-        await new OpenAIChatAPI(props.settingInfo.openaiKey, props.settingInfo.organization).createChatStreamCompletion(params).then(response => {
+        const response = await new OpenAIChatAPI(props.settingInfo.openaiKey, props.settingInfo.organization).createChatStreamCompletion(params);
+        if (response.ok) {
           const reader = response.body.getReader();
           handleReadStream(reader, currentResLocation, 'chat');
-        });
+        } else throw new Error('网络不稳定或key余额不足，请重试或更换key');
       }
 
       // 关闭流式对话
       else {
-        await new OpenAIChatAPI(props.settingInfo.openaiKey, props.settingInfo.organization)
-          .createChatCompletion(params)
-          .then(response => response.data)
-          .then(data => {
-            const content = data.choices[0].message.content; // 获取"content"字段的值
-            let decodedArray = content.split('');
-            decodedArray.forEach((decoded: string) => (chatList.value[currentResLocation].msg = chatList.value[currentResLocation].msg + decoded));
-          });
+        const response = await new OpenAIChatAPI(props.settingInfo.openaiKey, props.settingInfo.organization).createChatCompletion(params);
+        if (response.status === 200) {
+          const content = response.data.choices[0].message.content; // 获取"content"字段的值
+          let decodedArray = content.split('');
+          decodedArray.forEach((decoded: string) => (chatList.value[currentResLocation].msg = chatList.value[currentResLocation].msg + decoded));
+        } else throw new Error('网络不稳定或key余额不足，请重试或更换key');
       }
     } catch (error) {
       // 异常捕获，填充展示
-      const content = '网络不稳定或key余额不足，请重试或更换key'; // 获取"content"字段的值
+      const content = error.message;
       let decodedArray = content.split('');
-      decodedArray.forEach(decoded => (chatList.value[currentResLocation].msg = chatList.value[currentResLocation].msg + decoded));
-      console.error('xxxxxx', error);
+      decodedArray.forEach((decoded: any) => (chatList.value[currentResLocation].msg = chatList.value[currentResLocation].msg + decoded));
     }
 
     acqStatus.value = true;
@@ -426,46 +427,36 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
 
   // 发起普通对话
   const handleCompletion = async (params: Record<string, any>, chatBeforResMsg: Record<string, any>) => {
-    if (props.settingInfo.chat.suffix !== '') {
-      params.suffix = props.settingInfo.chat.suffix; // chat没有
-    }
-    params.echo = props.settingInfo.chat.echo; // chat没有
+    params.suffix = props.settingInfo.chat.suffix;
+    params.echo = props.settingInfo.chat.echo;
     params.prompt = inputMsg.value;
 
     // 新增一个空的消息
     handleSendMsg(chatBeforResMsg);
-
+    // 获取当前消息的位置
     const currentResLocation = chatList.value.length - 1;
 
     try {
-      await fetch(base.baseUrl + '/v1/completions', {
-        method: 'POST',
-        body: JSON.stringify({ ...params }),
-        headers: {
-          Authorization: 'Bearer ' + props.settingInfo.openaiKey,
-          'Content-Type': 'application/json'
-        }
-      }).then(response => {
-        if (response.status == 404) {
-          ElMessage.error($t('message.model_del'));
-          nextTick(() => {
-            acqStatus.value = true;
-          });
-          return;
-        }
-
+      const response = await new OpenAICompetionAPI(props.settingInfo.openaiKey, props.settingInfo.organization).createStreamCompletion(params);
+      if (response.status === 404) {
+        ElMessage.error($t('message.model_del'));
+        return;
+      } else if (response.status === 200) {
         const reader = response.body.getReader();
-        nextTick(() => {
-          acqStatus.value = true;
-        });
-
         handleReadStream(reader, currentResLocation, 'completion');
-      });
-    } catch (error) {}
+      } else throw new Error('网络不稳定或key余额不足，请重试或更换key');
+    } catch (error) {
+      // 异常捕获，填充展示
+      const content = error.message;
+      let decodedArray = content.split('');
+      decodedArray.forEach((decoded: any) => (chatList.value[currentResLocation].msg = chatList.value[currentResLocation].msg + decoded));
+    } finally {
+      nextTick(() => (acqStatus.value = true));
+    }
   };
 
   // 发送本地图片
-  const handleSendImg = (e: any) => {
+  const handleSendImg = async (e: any) => {
     acqStatus.value = false;
 
     //获取文件
@@ -499,17 +490,10 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
       return;
     }
 
-    // 通过验证后，上传文件
-    const dateNow = formatDateTime(getNowTime());
-    const formData = new FormData();
-    formData.append('image', file);
-    formData.append('n', props.settingInfo.n);
-    formData.append('size', props.settingInfo.size);
-
-    let chatMsg: Record<string, any> = {
+    const chatMsg: Record<string, any> = {
       headImg: USER_HEAD_IMG_URL,
       name: USER_NAME,
-      time: dateNow,
+      time: formatDateTime(getNowTime()),
       msg: '',
       chatType: 1, // 信息类型，0文字，1图片, 2文件
       extend: {
@@ -519,7 +503,7 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
     };
 
     if (!e || !window.FileReader) return; // 看是否支持FileReader
-    let reader = new FileReader();
+    const reader = new FileReader();
     reader.readAsDataURL(file); // 关键一步，在这里转换的
     reader.onloadend = function () {
       chatMsg.msg = this.result; //赋值
@@ -528,29 +512,24 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
 
     handleSendMsg(chatMsg);
 
-    createImageVariations(formData, props.settingInfo.openaiKey)
-      .then(data => {
-        for (let imgInfo of data) {
-          let imgResMsg = {
-            headImg: AI_HEAD_IMG_URL,
-            name: props.chatCompleteModelInfo.name,
-            time: formatDateTime(getNowTime()),
-            msg: imgInfo.url,
-            chatType: 1, // 信息类型，0文字，1图片
-            extend: {
-              imgType: 2 // (1表情，2本地图片)
-            },
-            uid: props.chatCompleteModelInfo.id // uid
-          };
-          handleSendMsg(imgResMsg);
-          srcImgList.value.push(imgInfo.url);
-        }
-        acqStatus.value = true;
-      })
-      .catch(e => {
-        console.log('错误', e);
-      });
+    const response = await new OpenAIImageAPI(props.settingInfo.openaiKey, props.settingInfo.organization).createImageVariation(file, props.settingInfo.n, props.settingInfo.size);
+    for (const imgInfo of response.data.data) {
+      const imgResMsg = {
+        headImg: AI_HEAD_IMG_URL,
+        name: props.chatCompleteModelInfo.name,
+        time: formatDateTime(getNowTime()),
+        msg: imgInfo.url,
+        chatType: 1, // 信息类型，0文字，1图片
+        extend: {
+          imgType: 2 // (1表情，2本地图片)
+        },
+        uid: props.chatCompleteModelInfo.id // uid
+      };
+      handleSendMsg(imgResMsg);
+      srcImgList.value.push(imgInfo.url);
+    }
 
+    acqStatus.value = true;
     e.target.files = null;
   };
 
@@ -629,20 +608,20 @@ export const useChatWindowSendMessages = (props: Record<string, any>, emits: any
   };
 
   // 翻译/转录语音
-  const handleTranslateVoice = (formData: FormData) => {
-    if (props.settingInfo.translateEnglish) {
-      createTranslation(formData, props.settingInfo.openaiKey).then(data => {
-        nextTick(() => {
-          inputMsg.value = data;
-        });
-      });
-    } else {
-      formData.append('language', props.settingInfo.language);
-      createTranscription(formData, props.settingInfo.openaiKey).then(data => {
-        nextTick(() => {
-          inputMsg.value = data;
-        });
-      });
+  const handleTranslateVoice = async (result: any) => {
+    const { file, model, temperature, responseFormat } = result;
+
+    // 打开语言转文字
+    if (props.settingInfo.translateAudio) {
+      const response = await new OpenAIAudioAPI(props.settingInfo.openaiKey, props.settingInfo.organization).createTranslation(file, model, '', responseFormat, temperature);
+      inputMsg.value = response.data.text || (response.data as any); // 此处的返回值有BUG，需要等待OpenAI修复
+    }
+
+    // 音频转录为其他语言
+    else {
+      const language = props.settingInfo.language;
+      const response = await new OpenAIAudioAPI(props.settingInfo.openaiKey, props.settingInfo.organization).createTranscription(file, model, '', responseFormat, temperature, language);
+      inputMsg.value = response.data.text || (response.data as any); // 此处的返回值有BUG，需要等待OpenAI修复
     }
   };
 
@@ -704,13 +683,12 @@ export const useChatWindowSendVoice = (props: Record<string, any>, emits: any) =
         const blob = new Blob([event.data], { type: 'audio/wav' });
         const file = new File([blob], 'recording.wav', { type: 'audio/wav', lastModified: Date.now() });
 
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('model', 'whisper-1');
-        formData.append('temperature', props.settingInfo.temperatureAudio);
-        formData.append('response_format', 'text');
-
-        resolve(formData);
+        resolve({
+          file,
+          model: 'whisper-1',
+          temperature: props.settingInfo.temperatureAudio,
+          responseFormat: 'text'
+        });
       };
 
       ElMessage.success($t('message.end_recording'));
