@@ -1,5 +1,6 @@
 import { OpenAIApi, Configuration } from 'openai';
-import base from '@/api/index';
+import { OPENAI_PROXY_URL } from '@/store/mutation-types';
+import { CustomFormData } from '@/utils/openaifix';
 
 /**
  * @description OpenAI Chat API 模型接口
@@ -12,7 +13,7 @@ export class OpenAIChatAPI {
   private organization: string;
 
   constructor(token: string, organization?: string) {
-    const configuration = new Configuration({ apiKey: token, organization: organization });
+    const configuration = new Configuration({ apiKey: token, organization: organization, formDataCtor: CustomFormData });
     const openaiInstance = new OpenAIApi(configuration);
     this.openaiInstance = openaiInstance;
     this.token = token;
@@ -26,10 +27,10 @@ export class OpenAIChatAPI {
   };
 
   // OpenAI createChatStreamCompletion 流式创建Chat Completion
-  public createChatStreamCompletion = (body: any) => {
-    return fetch(base.baseUrl + '/v1/chat/completions', {
+  public createChatStreamCompletion = async (body: any) => {
+    return await fetch(OPENAI_PROXY_URL + '/v1/chat/completions', {
       method: 'POST',
-      body: JSON.stringify({ ...body }),
+      body: JSON.stringify(body),
       headers: {
         Authorization: 'Bearer ' + this.token,
         'Content-Type': 'application/json',

@@ -1,4 +1,6 @@
-import { OpenAIApi } from 'openai';
+import { OpenAIApi, Configuration } from 'openai';
+import { OPENAI_PROXY_URL } from '@/store/mutation-types';
+import { CustomFormData } from '@/utils/openaifix';
 
 /**
  * @description OpenAI Audio API 模型接口
@@ -6,21 +8,27 @@ import { OpenAIApi } from 'openai';
  * @time 2023.05.21 19:03:42
  */
 export class OpenAIAudioAPI {
-  constructor(private openaiInstance: OpenAIApi) {}
+  private openaiInstance: OpenAIApi;
+  private token: string;
+  private organization: string;
+
+  constructor(token: string, organization?: string) {
+    const configuration = new Configuration({ apiKey: token, organization: organization, formDataCtor: CustomFormData });
+    const openaiInstance = new OpenAIApi(configuration);
+    this.openaiInstance = openaiInstance;
+    this.token = token;
+    this.organization = organization;
+  }
 
   // OpenAI Create transcription 创建音频转录
-  public createTranscription = async () => {
-    const audio = new File(['audio.mp3'], 'audio.mp3', { type: 'audio/mp3' });
-    const prompt = 'whisper-1';
-    const result = await this.openaiInstance.createTranscription(audio, prompt);
+  public createTranscription = async (file: File, model: string, prompt?: string, responseFormat?: string, temperature?: number, language?: string) => {
+    const result = await this.openaiInstance.createTranscription(file, model, prompt, responseFormat, temperature, language);
     return result;
   };
 
   // OpenAI Create translation 创建音频翻译
-  public createTranslation = async () => {
-    const audio = new File(['audio.mp3'], 'audio.mp3', { type: 'audio/mp3' });
-    const targetLanguage = 'zh';
-    const result = await this.openaiInstance.createTranslation(audio, targetLanguage);
+  public createTranslation = async (file: File, model: string, prompt?: string, responseFormat?: string, temperature?: number) => {
+    const result = await this.openaiInstance.createTranslation(file, model, prompt, responseFormat, temperature);
     return result;
   };
 }

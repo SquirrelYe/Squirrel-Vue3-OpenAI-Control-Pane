@@ -1,4 +1,6 @@
-import { OpenAIApi } from 'openai';
+import { OpenAIApi, Configuration } from 'openai';
+import { OPENAI_PROXY_URL } from '@/store/mutation-types';
+import { CustomFormData } from '@/utils/openaifix';
 
 /**
  * @description OpenAI Image API 模型接口
@@ -6,31 +8,33 @@ import { OpenAIApi } from 'openai';
  * @time 2023.05.21 19:03:42
  */
 export class OpenAIImageAPI {
-  constructor(private openaiInstance: OpenAIApi) {}
+  private openaiInstance: OpenAIApi;
+  private token: string;
+  private organization: string;
+
+  constructor(token: string, organization?: string) {
+    const configuration = new Configuration({ apiKey: token, organization: organization, formDataCtor: CustomFormData });
+    const openaiInstance = new OpenAIApi(configuration);
+    this.openaiInstance = openaiInstance;
+    this.token = token;
+    this.organization = organization;
+  }
 
   // OpenAI Create Image 生成图片
-  public createImage = async () => {
-    const result = await this.openaiInstance.createImage({
-      prompt: 'A cute baby sea otter',
-      n: 2,
-      size: '256x256',
-      response_format: 'b64_json'
-    });
+  public createImage = async (body: any) => {
+    const result = await this.openaiInstance.createImage(body);
     return result;
   };
 
   // OpenAI Create image edit 生成图片编辑
-  public createImageEdit = async () => {
-    const image = new File(['logo.png'], 'logo.png', { type: 'image/png' });
-    const prompt = 'A cute cat with a fish';
-    const result = await this.openaiInstance.createImageEdit(image, prompt);
+  public createImageEdit = async (image: File, prompt: string, mask?: File, n?: number, size?: string, responseFormat?: string, user?: string) => {
+    const result = await this.openaiInstance.createImageEdit(image, prompt, mask, n, size, responseFormat, user);
     return result;
   };
 
   // OpenAI Create image variation 生成图片变体
-  public createImageVariation = async () => {
-    const image = new File(['logo.png'], 'logo.png', { type: 'image/png' });
-    const result = await this.openaiInstance.createImageVariation(image);
+  public createImageVariation = async (image: File, n?: number, size?: string, responseFormat?: string, user?: string) => {
+    const result = await this.openaiInstance.createImageVariation(image, n, size, responseFormat, user);
     return result;
   };
 }

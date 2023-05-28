@@ -1,4 +1,6 @@
-import { OpenAIApi } from 'openai';
+import { OpenAIApi, Configuration } from 'openai';
+import { OPENAI_PROXY_URL } from '@/store/mutation-types';
+import { CustomFormData } from '@/utils/openaifix';
 
 /**
  * @description OpenAI File API 模型接口
@@ -6,7 +8,17 @@ import { OpenAIApi } from 'openai';
  * @time 2023.05.21 19:03:42
  */
 export class OpenAIFileAPI {
-  constructor(private openaiInstance: OpenAIApi) {}
+  private openaiInstance: OpenAIApi;
+  private token: string;
+  private organization: string;
+
+  constructor(token: string, organization?: string) {
+    const configuration = new Configuration({ apiKey: token, organization: organization, formDataCtor: CustomFormData });
+    const openaiInstance = new OpenAIApi(configuration);
+    this.openaiInstance = openaiInstance;
+    this.token = token;
+    this.organization = organization;
+  }
 
   // OpenAI List Files 列出所有文件
   public listFiles = async () => {

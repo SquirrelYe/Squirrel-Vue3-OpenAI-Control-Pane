@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { OPENAI_PROXY_URL } from '@/store/mutation-types';
 
 // 全局参数，自定义参数可在发送请求时设置
 axios.defaults.timeout = 300 * 1000 * 1000; // 超时时间ms
@@ -25,7 +26,7 @@ axios.interceptors.response.use(
 
 const base = {
   axios: axios,
-  baseUrl: 'https://api.openai.com'
+  baseUrl: OPENAI_PROXY_URL
 };
 
 export default base;
